@@ -1,0 +1,215 @@
+/* ================================
+   GLOBAL HARD LOCK (NO SCROLL)
+================================ */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ================================
+   AUTH PAGE BACKGROUND
+================================ */
+.auth-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top left, #667eea, #764ba2, #2d3436);
+  background-size: 300% 300%;
+  animation: gradientShift 12s ease infinite;
+  padding: 16px;
+  overflow: hidden;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ================================
+   MAIN CARD
+================================ */
+.auth-container {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px);
+  border-radius: 28px;
+  padding: 28px 32px 32px;
+  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================
+   ROBOT (EYES HARD-LOCKED)
+================================ */
+.robot-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.robot-svg {
+  width: 125px;
+  height: 125px;
+  animation: float 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.18));
+}
+
+/* Absolute eye clamp */
+.robot-svg g {
+  clip-path: inset(0);
+}
+
+.robot-svg circle,
+.robot-svg ellipse {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* ================================
+   TEXT
+================================ */
+.auth-title {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  margin: 8px 0 4px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #636e72;
+  margin-bottom: 22px;
+}
+
+/* ================================
+   FORM
+================================ */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.input-group {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 44px;
+  border: 2px solid #edf2f7;
+  border-radius: 14px;
+  font-size: 15px;
+  background: white;
+  transition: 0.25s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+}
+
+/* Icons */
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  opacity: 0.6;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+
+.eye-icon:hover {
+  transform: translateY(-50%) scale(1.15);
+}
+
+/* ================================
+   BUTTON
+================================ */
+.submit-btn {
+  margin-top: 6px;
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 10px 18px rgba(118, 75, 162, 0.45);
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.submit-btn:disabled {
+  background: #c7c9cc;
+  cursor: not-allowed;
+}
+
+/* ================================
+   SWITCH
+================================ */
+.switch {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+.switch a {
+  color: #764ba2;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* ================================
+   SMALL HEIGHT DEVICES
+================================ */
+@media (max-height: 680px) {
+  .robot-container {
+    display: none;
+  }
+}

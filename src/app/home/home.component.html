@@ -1,0 +1,64 @@
+<section class="hero" (mousemove)="onMove($event)">
+
+  <!-- Background layers -->
+  <div class="bg-gradient"></div>
+  <div class="bg-glow"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    
+
+    <ul class="menu">
+      <li>Home</li>
+      <li>Chats</li>
+      <li>Features</li>
+      <li>Data</li>
+      <!-- <li>Pricing</li>
+      <li>Resources</li> -->
+    </ul>
+
+    <div class="nav-actions">
+
+  <!-- SIGN IN -->
+        <button
+  routerLink="/login"
+  class="btn signin-btn">
+  <span>Sign In</span>
+</button>
+
+  <!-- <a class="btn primary">
+    Request a Demo
+  </a> -->
+
+</div>
+
+  </nav>
+
+  <!-- HERO CONTENT -->
+  <div class="hero-content">
+
+    <div class="hero-text">
+      <h1>
+        <span>The Future</span><br />
+        of Location <b>Intelligence</b>
+      </h1>
+
+      <p>
+        AI-powered insights built for modern chats.
+      </p>
+
+      <div class="cta">
+        <button class="btn primary">See It in Action</button>
+        <button class="btn outline">Explore the Features</button>
+      </div>
+    </div>
+
+    <!-- FLOATING DASHBOARD -->
+    <!-- <div class="hero-visual" [style.transform]="tilt">
+      <img src="assets\img\home-robo.png" alt="dashboard" />
+    </div> -->
+    <img src="assets\img\home-robo.png" alt="dashboard" />
+  </div>
+
+  <!-- FLOATING SHAPES -->
+  <span class="orb one">

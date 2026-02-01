@@ -1,0 +1,47 @@
+<!-- TOP NAVBAR -->
+<div class="page-navbar">
+  <h2>👥 Users Management</h2>
+
+  <div class="nav-actions">
+    <span class="count-badge">{{ users.length }} Users</span>
+  </div>
+</div>
+
+<!-- USERS TABLE -->
+<table class="users-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let user of users">
+      <td>{{ user.name }}</td>
+      <td>{{ user.email }}</td>
+
+      <td>
+        <span class="status banned" *ngIf="user.isBanned">Banned</span>
+        <span class="status suspended" *ngIf="!user.isBanned && user.isSuspended">Suspended</span>
+        <span class="status active" *ngIf="!user.isBanned && !user.isSuspended">Active</span>
+      </td>
+
+
+      <td>
+        <button class="ban-btn" (click)="toggleBan(user._id)">
+          {{ user.isBanned ? 'Unban' : 'Ban' }}
+        </button>
+        <button
+          class="suspend-btn"
+          (click)="toggleSuspend(user._id)"
+        >
+          {{ user.isSuspended ? 'Unsuspend' : 'Suspend' }}
+        </button>
+      </td>
+      
+    </tr>
+  </tbody>
+</table>

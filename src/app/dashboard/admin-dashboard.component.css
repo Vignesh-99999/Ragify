@@ -1,0 +1,92 @@
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ===== PAGE NAVBAR ===== */
+.page-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  border-radius: 22px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.85),
+    rgba(243, 244, 255, 0.85)
+  );
+
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+}
+
+.page-navbar h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #4338ca;
+}
+
+/* ADMIN BADGE */
+.admin-badge {
+  padding: 7px 20px;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #a5b4fc, #bbf7d0);
+  color: #1e293b;
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.3);
+}
+
+/* ===== CONTENT ===== */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.welcome {
+  font-size: 16px;
+  margin-bottom: 22px;
+  color: #475569;
+}
+
+/* ===== CARDS ===== */
+.cards {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
+.card {
+  width: 280px;
+  padding: 28px;
+  border-radius: 24px;
+
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.06),
+    0 4px 10px rgba(99, 102, 241, 0.1);
+
+  transition: all 0.35s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 18px 36px rgba(99, 102, 241, 0.25);
+}
+
+.card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.card h1 {
+  margin-top: 14px;
+  font-size: 42px;
+  font-weight: 700;
+  color: #0f172a;
+}

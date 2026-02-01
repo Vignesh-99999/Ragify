@@ -1,0 +1,25 @@
+<div class="admin-container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>🛡 Admin</h2>
+
+    <ul>
+      <li routerLink="/admin/dashboard" routerLinkActive="active">
+        Dashboard
+      </li>
+
+      <li routerLink="/admin/users" routerLinkActive="active">
+        Users
+      </li>
+
+      <li (click)="logout()">Logout</li>
+    </ul>
+  </div>
+
+  <!-- PAGE CONTENT -->
+  <div class="content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>
