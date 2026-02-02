@@ -1,0 +1,24 @@
+flask
+werkzeug
+python-dotenv
+
+# NLP & Embeddings
+sentence-transformers
+transformers
+torch
+numpy
+
+# PDF processing
+PyMuPDF
+
+# Vector DB
+pinecone
+
+# Database
+pymongo
+
+# Google Gemini
+google-generativeai
+
+# Utilities
+requests

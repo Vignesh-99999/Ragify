@@ -134,3 +134,26 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+# ---- Python virtual environments ----
+venv/
+.venv/
+env/
+ENV/
+
+# ---- Python cache ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ---- Environment variables ----
+.env
+
+# ---- OS / Editor junk ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+

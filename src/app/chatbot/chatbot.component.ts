@@ -3,19 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: any;
-  timestamp: string;
-  docId: string | null;
-  type: 'text' | 'qa' | 'mcq' | 'summary' | 'card';
-}
-
-interface UploadedDocument {
-  document_id: string;
-  file_name: string;
-}
-
 @Component({
   selector: 'app-chatbot',
   standalone: true,
@@ -38,6 +25,7 @@ export class ChatbotComponent implements OnInit {
   isDarkMode = true;
   sidebarOpen = true;
   isLoading = false;
+
   isLoggedIn = false;
   userName = 'Guest User';
 
@@ -47,151 +35,153 @@ export class ChatbotComponent implements OnInit {
   currentDocumentId: string | null = null;
 
   userInput = '';
+  selectedMode: 'qa' | 'summary' | 'flashcards' | 'mcq' = 'qa';
   searchQuery = '';
-  selectedMode = 'qa';
-
-  formattedResponse: any = null;
 
   ngOnInit(): void {
-    this.loadHistory();
     this.messages.push({
       role: 'assistant',
-      content: 'Hello! Please upload a PDF to start a session.',
+      content: 'Hello! Please upload a PDF to start.',
       timestamp: this.getTime(),
       docId: null,
       type: 'text'
     });
   }
+newChat(): void {
+  this.currentDocumentId = null;
+  this.userInput = '';
+  this.scrollToBottom();
+}
+deleteDocument(event: MouseEvent, docId: string): void {
+  event.stopPropagation();
 
-  clearHistory() {
-    if (confirm('Are you sure you want to clear all uploaded files?')) {
-      this.documents = [];
-      this.filteredDocuments = [];
-      this.messages = [];
-      this.currentDocumentId = null;
+  if (!confirm('Delete this document and its chat?')) return;
+
+  this.documents = this.documents.filter(d => d.document_id !== docId);
+  this.messages = this.messages.filter(m => m.docId !== docId);
+
+  if (this.currentDocumentId === docId) {
+    this.currentDocumentId = null;
+  }
+
+  this.loadHistory();
+}
+  /* =========================
+     PDF UPLOAD
+     ========================= */
+  async onFileSelected(event: any): Promise<void> {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.isLoading = true;
+
+    try {
+      const res = await fetch('http://localhost:5001/guest/upload-pdf', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Upload failed: ${text}`);
+      }
+
+      const data = await res.json();
+
+      if (!data.document_id) throw new Error('No document_id returned from backend');
+
+      this.currentDocumentId = data.document_id;
+
+      this.documents.unshift({
+        document_id: data.document_id,
+        file_name: file.name
+      });
+      this.loadHistory();
+
+      this.messages.push({
+        role: 'assistant',
+        content: `PDF <b>${file.name}</b> uploaded successfully.`,
+        timestamp: this.getTime(),
+        docId: data.document_id,
+        type: 'text'
+      });
+    } catch (err) {
+      console.error(err);
+      alert(`PDF upload failed: ${err}`);
+    } finally {
+      this.isLoading = false;
+      this.scrollToBottom();
     }
   }
 
-  get filteredMessages() {
-    return this.messages.filter(m => m.docId === this.currentDocumentId);
-  }
-
-  selectMcqOption(questionObj: any, selectedKey: any) {
-    if (questionObj.userSelected) return;
-    questionObj.userSelected = selectedKey;
-    questionObj.isCorrect = selectedKey === questionObj.correct;
-  }
-
-  /* ================== MAIN CHANGE HERE ================== */
-  sendMessage(): void {
+  /* =========================
+     SEND MESSAGE
+     ========================= */
+  async sendMessage(): Promise<void> {
     if (!this.userInput.trim()) return;
+    if (!this.currentDocumentId) {
+      alert('Please upload a PDF first.');
+      return;
+    }
 
-    const now = this.getTime();
-    const currentDoc = this.currentDocumentId;
-    const currentMode = this.selectedMode;
+    const question = this.userInput;
+    const mode = this.selectedMode;
+    const docId = this.currentDocumentId;
 
     this.messages.push({
       role: 'user',
-      content: this.userInput,
-      timestamp: now,
-      docId: currentDoc,
+      content: question,
+      timestamp: this.getTime(),
+      docId,
       type: 'text'
     });
 
-    const tempInput = this.userInput;
     this.userInput = '';
     this.isLoading = true;
     this.scrollToBottom();
 
-    setTimeout(() => {
+    try {
+      const res = await fetch('http://localhost:5001/guest/rag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task: mode,
+          query: question,
+          document_id: docId
+        })
+      });
 
-      let backendResponse: any;
-
-      switch (currentMode) {
-
-        case 'mcq':
-          backendResponse = {
-            task: 'mcq',
-            mcqs: [
-              {
-                question: 'What is Angular?',
-                options: { A: 'Database', B: 'Framework', C: 'Browser', D: 'OS' },
-                correct: 'B',
-                explanation: 'Angular is a frontend framework.'
-              }
-            ]
-          };
-          break;
-
-        case 'card':
-          backendResponse = {
-            task: 'flashcards',
-            flashcards: [
-              { front: 'HTML', back: 'Structure' },
-              { front: 'CSS', back: 'Styling' },
-              { front: 'JS', back: 'Logic' }
-            ]
-          };
-          break;
-
-        case 'summary':
-          backendResponse = {
-            task: 'summarize',
-            key_points: [
-              'Component based',
-              'Uses TypeScript',
-              'Two-way binding'
-            ],
-            overview: 'Angular is a modern frontend framework.'
-          };
-          break;
-
-        default:
-          backendResponse = {
-            task: 'qa',
-            answer: `Sample answer for "${tempInput}".`
-          };
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`RAG request failed: ${text}`);
       }
 
-      const formatted = this.applyFormatting(backendResponse);
+      const data = await res.json();
 
       this.messages.push({
         role: 'assistant',
-        content: formatted,
+        content: data.answer || data,
         timestamp: this.getTime(),
-        docId: currentDoc,
-        type: currentMode
+        docId,
+        type: mode
       });
-
+    } catch (err) {
+      console.error(err);
+      alert(`Error fetching response: ${err}`);
+    } finally {
       this.isLoading = false;
       this.scrollToBottom();
-    }, 800);
+    }
   }
-  /* ================== END CHANGE ================== */
 
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    this.isLoading = true;
-
-    setTimeout(() => {
-      const mockId = Math.random().toString(36).substring(2, 9);
-      this.documents.unshift({ document_id: mockId, file_name: file.name });
-      this.loadHistory();
-      this.currentDocumentId = mockId;
-
-      this.messages.push({
-        role: 'assistant',
-        content: `Processed <b>${file.name}</b>.`,
-        timestamp: this.getTime(),
-        docId: mockId,
-        type: 'text'
-      });
-
-      this.isLoading = false;
-      this.scrollToBottom();
-    }, 700);
+  /* =========================
+     UI HELPERS
+     ========================= */
+  get filteredMessages() {
+    return this.messages.filter(m => m.docId === this.currentDocumentId);
   }
 
   selectDocument(doc: any) {
@@ -199,31 +189,23 @@ export class ChatbotComponent implements OnInit {
     this.scrollToBottom();
   }
 
-  newChat() {
+  clearHistory() {
+    this.documents = [];
+    this.filteredDocuments = [];
+    this.messages = [];
     this.currentDocumentId = null;
-    this.scrollToBottom();
-  }
-
-  toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
-  toggleTheme() { this.isDarkMode = !this.isDarkMode; }
-
-  deleteDocument(event: MouseEvent, docId: string): void {
-    event.stopPropagation();
-    if (confirm('Delete this chat?')) {
-      this.documents = this.documents.filter(d => d.document_id !== docId);
-      this.messages = this.messages.filter(m => m.docId !== docId);
-      if (this.currentDocumentId === docId) this.currentDocumentId = null;
-      this.loadHistory();
-    }
   }
 
   loadHistory() {
     this.filteredDocuments = !this.searchQuery.trim()
       ? [...this.documents]
-      : this.documents.filter(doc =>
-          doc.file_name.toLowerCase().includes(this.searchQuery.toLowerCase())
+      : this.documents.filter(d =>
+          d.file_name.toLowerCase().includes(this.searchQuery.toLowerCase())
         );
   }
+
+  toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
+  toggleTheme() { this.isDarkMode = !this.isDarkMode; }
 
   private scrollToBottom() {
     setTimeout(() => {
@@ -236,39 +218,5 @@ export class ChatbotComponent implements OnInit {
 
   private getTime(): string {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  /* FORMATTERS */
-
-  private formatBackendResponse(raw: any) {
-    if (!raw || !raw.task) return raw;
-    switch (raw.task) {
-      case 'mcq': return this.formatMCQ(raw);
-      case 'flashcards': return this.formatFlashcards(raw);
-      case 'summarize': return this.formatSummary(raw);
-      default: return this.formatQA(raw);
-    }
-  }
-
-  private formatQA(data: any) {
-    return { type: 'qa', answer: data.answer };
-  }
-
-  private formatSummary(data: any) {
-    return { key_points: data.key_points, overview: data.overview };
-  }
-
-  private formatFlashcards(data: any) {
-    return { flashcards: data.flashcards };
-  }
-
-  private formatMCQ(data: any) {
-    return { mcqs: data.mcqs };
-  }
-
-  private applyFormatting(response: any) {
-    const formatted = this.formatBackendResponse(response);
-    this.formattedResponse = formatted;
-    return formatted;
   }
 }
