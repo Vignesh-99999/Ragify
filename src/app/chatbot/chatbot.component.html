@@ -1,0 +1,130 @@
+<div class="app-container" [class.dark-mode]="isDarkMode">
+  <aside class="sidebar" [class.collapsed]="!sidebarOpen">
+    <div class="sidebar-wrapper">
+      <div class="sidebar-header">
+        <div class="logo"><i class="pi pi-bolt"></i> AI Analytica</div>
+        <button class="new-btn" (click)="newChat()">+ New Session</button>
+      </div>
+      <div class="sidebar-content">
+        <div class="search-box">
+          <input type="text" placeholder="Search history..." [(ngModel)]="searchQuery" (input)="loadHistory()">
+        </div>&nbsp;&nbsp;
+        <div class="history-list">
+          <p class="label"><b>Your Chats</b></p>&nbsp;&nbsp;
+          <button *ngIf="documents.length > 0" class="clear-history-btn" (click)="clearHistory()">
+        Clear All
+      </button>&nbsp;&nbsp;
+          <div *ngIf="documents.length === 0" class="empty-state">No uploads yet</div>
+          <div *ngFor="let doc of filteredDocuments" 
+               class="history-item" 
+               [class.active]="currentDocumentId === doc.document_id"
+               (click)="selectDocument(doc)">
+            <i class="pi pi-file-pdf" style="color: #bf44ef;"></i>
+            <span>{{ doc.file_name }}</span>
+            <i class="pi pi-trash delete-chat-btn" 
+           (click)="deleteDocument($event, doc.document_id)"></i>
+          
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <nav class="navbar">
+      <div class="nav-left">
+        <button class="icon-btn" (click)="toggleSidebar()"><i class="pi pi-bars"></i></button>
+      </div>
+      <div class="nav-right">
+        <button class="icon-btn" (click)="toggleTheme()"><i class="pi" [ngClass]="isDarkMode ? 'pi-sun' : 'pi-moon'"></i></button>
+        <div class="profile-chip">
+          <div class="avatar"><span>{{ isLoggedIn ? userName[0] : 'G' }}</span></div>
+          <span class="user-name">{{ isLoggedIn ? userName : 'Guest User' }}</span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="chat-viewport" #scrollMe>
+      <div class="chat-inner">
+        <div *ngFor="let msg of filteredMessages" class="msg-row" [ngClass]="msg.role">
+          <div class="msg-container">
+            <div class="msg-avatar">
+              <i [class]="msg.role === 'assistant' ? 'pi pi-bolt' : 'pi pi-user'"></i>
+            </div>
+            <div class="msg-body">
+              <div class="content">
+                
+                <div *ngIf="msg.type === 'qa' || msg.type === 'text' || msg.role === 'user'">
+                  <div [innerHTML]="msg.role === 'user' ? msg.content : msg.content.answer || msg.content"></div>
+                </div>
+
+                <div *ngIf="msg.type === 'summary'" class="summary-container">
+                  <p><strong>Summary Key Points:</strong></p>
+                  <ul>
+                    <li *ngFor="let point of msg.content.key_points">{{ point }}</li>
+                  </ul>
+                </div>
+
+                <div *ngIf="msg.type === 'card'" class="flashcard-grid">
+                  <div *ngFor="let card of msg.content.flashcards" class="card-item">
+                    <div class="card-front"><strong>Q:</strong> {{ card.front }}</div>
+                    <div class="card-back"><strong>A:</strong> {{ card.back }}</div>
+                  </div>
+                </div>
+
+                <div *ngIf="msg.type === 'mcq'" class="mcq-container">
+                  <div *ngFor="let item of msg.content.mcqs; let i = index" class="mcq-block">
+                    <p class="question"><strong>{{i+1}}.</strong> {{ item.question }}</p>
+                    <div class="options-grid">
+                      <div *ngFor="let opt of item.options | keyvalue" class="option-pill">
+                        <strong>{{ opt.key }}:</strong> {{ opt.value }}
+                      </div>
+                    </div>
+                    <div class="explanation">
+                      <span class="correct-badge">Correct: {{ item.correct }}</span>
+                      <p>{{ item.explanation }}</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="timestamp">{{ msg.timestamp }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="isLoading" class="msg-row assistant">
+          <div class="msg-container">
+            <div class="msg-avatar"><i class="pi pi-bolt"></i></div>
+            <div class="content" style="background: transparent; box-shadow: none; border: none;">
+              <i class="pi pi-spin pi-spinner" style="color: #10a37f; font-size: 1.2rem;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-container">
+      <div class="input-bar">
+        <input type="file" (change)="onFileSelected($event)" accept=".pdf" id="bar-upload" hidden>
+        <label for="bar-upload" class="upload-trigger"><i class="pi pi-paperclip"></i></label>
+        
+        <select [(ngModel)]="selectedMode" class="mode-select">
+          <option value="qa">Q&As</option>
+          <option value="card">Flashcards</option>
+          <option value="summary">Summarize</option>
+          <option value="mcq">MCQs</option>
+        </select>
+
+        <textarea [(ngModel)]="userInput" 
+                  (keydown.enter)="$event.preventDefault(); sendMessage()" 
+                  placeholder="Ask about the file..." 
+                  rows="1"></textarea>
+
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput.trim()">
+          <i class="pi pi-arrow-up"></i>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>

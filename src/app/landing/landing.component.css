@@ -155,3 +155,25 @@
   }
 }
 
+
+/* Secondary */
+.action-btn--secondary {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+.action-btn--secondary:hover {
+  background: #fff;
+  color: #000;
+}
+
+/* Home special */
+.action-btn--home {
+  border-color: #43cea2;
+  color: #43cea2;
+}
+
+.action-btn--home:hover {
+  background: rgba(67, 206, 162, 0.15);
+}
