@@ -1,4 +1,148 @@
-/* PREMIUM BUTTON STYLE */
+/* GLOBAL RESET */
+:host {
+  display: block;
+  background-color: #0b0e14;
+}
+
+.page-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Allows scrolling */
+  color: #ffffff;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+/* NAVBAR - STICKY BUT FUNCTIONAL */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background: rgba(11, 14, 20, 0.95);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.logo-accent {
+  color: #4fd1ff;
+}
+
+.nav-links {
+  display: flex;
+  gap: 15px;
+}
+
+/* HERO SECTION */
+.hero-section {
+  padding: 100px 10% 60px;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 800;
+  margin-bottom: 20px;
+  line-height: 1.1;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #4fd1ff, #4b6cff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: #8b949e;
+  max-width: 700px;
+  margin: 0 auto 40px;
+}
+
+/* PRICING STYLES */
+.pricing-section {
+  padding: 60px 5% 100px;
+}
+
+.section-heading {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 50px;
+}
+
+.pricing-grid {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.pricing-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 20px;
+  padding: 40px;
+  width: 350px;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.pricing-card.premium {
+  border-color: #4fd1ff;
+  background: #1c212c;
+  box-shadow: 0 10px 40px rgba(79, 209, 255, 0.15);
+}
+
+.pricing-card:hover {
+  transform: translateY(-10px);
+}
+
+.price {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 20px 0;
+}
+
+.price span {
+  font-size: 1rem;
+  color: #8b949e;
+}
+
+.benefit-list {
+  list-style: none;
+  padding: 0;
+  margin: 30px 0;
+  text-align: left;
+}
+
+.benefit-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ribbon {
+  position: absolute;
+  top: -15px;
+  right: 20px;
+  background: #4fd1ff;
+  color: #000;
+  padding: 5px 15px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* BUTTONS */
 .signin-btn {
   position: relative;
   padding: 12px 26px;
@@ -6,40 +150,23 @@
   background: linear-gradient(135deg, #4fd1ff, #4b6cff);
   color: #fff;
   font-weight: 600;
-  letter-spacing: 0.4px;
+  border: none;
+  cursor: pointer;
   overflow: hidden;
-  box-shadow: 0 0 20px rgba(79, 209, 255, 0.35);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: 0.25s;
 }
 
-/* GLOW SWEEP EFFECT */
-.signin-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -120%;
-  width: 120%;
-  height: 100%;
-  background: linear-gradient(
-    120deg,
-    transparent,
-    rgba(255,255,255,0.6),
-    transparent
-  );
-  transition: left 0.6s ease;
+.signin-btn.secondary {
+  background: transparent;
+  border: 1px solid #4fd1ff;
 }
 
-/* HOVER EFFECT */
-.signin-btn:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 12px 35px rgba(79, 209, 255, 0.6);
-}
-
-.signin-btn:hover::before {
-  left: 120%;
-}
-
-/* CLICK EFFECT */
-.signin-btn:active {
-  transform: scale(0.96);
+.card-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #30363d;
+  background: transparent;
+  color: white;
+  cursor: pointer;
 }

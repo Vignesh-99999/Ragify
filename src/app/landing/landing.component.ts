@@ -223,13 +223,12 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Initialize colors and mouse after THREE is loaded
     if (this.colors.length === 0) {
-      this.colors = [
-        new THREE.Color(0xac1122),
-        new THREE.Color(0x96789f),
-        new THREE.Color(0x535353)
-      ];
-    }
-
+  this.colors = [
+    new THREE.Color(0x4fd1ff), // Light Cyan Blue (from your gradient)
+    new THREE.Color(0x4b6cff), // Primary Royal Blue (from your gradient)
+    new THREE.Color(0x1a237e)  // Deep Indigo/Navy (for depth)
+  ];
+}
     if (!this.mouse) {
       this.mouse = new THREE.Vector2(-100, -100);
     }
