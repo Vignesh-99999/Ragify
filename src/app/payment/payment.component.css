@@ -1,0 +1,40 @@
+.payment-container {
+  max-width: 600px;
+  margin: auto;
+  text-align: center;
+}
+
+.plans {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.plan-card {
+  border: 2px solid #ccc;
+  padding: 20px;
+  width: 150px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: 0.3s;
+}
+
+.plan-card:hover {
+  transform: scale(1.05);
+}
+
+.plan-card.active {
+  border-color: #00c853;
+  background: #e8f5e9;
+}
+
+.pay-btn {
+  margin-top: 20px;
+  padding: 12px 25px;
+  background: #00c853;
+  color: white;
+  border: none;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}

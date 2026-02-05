@@ -8,6 +8,8 @@ import { AdminDashboardComponent } from './dashboard/admin-dashboard.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { ChatbotComponent } from './chatbot/chatbot.component';
 import { GoogleSuccessComponent } from './google-success/google-success.component';
+import { PaymentComponent } from './payment/payment.component';
+import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
 
@@ -15,10 +17,11 @@ export const routes: Routes = [
   { path: 'signup', component: SignupComponent },
   { path: 'login', component: LoginComponent },
   { path: 'home', component: HomeComponent },
-  { path: 'dashboard', component: DashboardComponent },
+  { path: 'dashboard', component: DashboardComponent,canActivate: [AuthGuard] },
   { path: 'google-success', component: GoogleSuccessComponent },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent,canActivate: [AuthGuard] },
   { path: 'chatbot', component: ChatbotComponent},
+  { path: 'payment', component: PaymentComponent },
 
   // ❌ REMOVED (causes sidebar bypass)
   // { path: 'admin-dashboard', component: AdminDashboardComponent },
@@ -26,6 +29,7 @@ export const routes: Routes = [
   // ✅ ADMIN LAYOUT ROUTES (SIDEBAR PERSISTENT)
   {
     path: 'admin',
+    canActivate: [AuthGuard],
     loadComponent: () =>
       import('./admin/admin-layout/admin-layout.component')
         .then(m => m.AdminLayoutComponent),

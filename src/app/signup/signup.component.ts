@@ -10,6 +10,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import Swal from 'sweetalert2';
 
+
 @Component({
   selector: 'app-signup',
   standalone: true,
@@ -50,8 +51,10 @@ export class SignupComponent implements OnInit, OnDestroy {
 
   constructor(
     private auth: AuthService,
-    private router: Router
+    private router: Router,
   ) {}
+
+  
 
   ngOnInit(): void {}
   ngOnDestroy(): void {}

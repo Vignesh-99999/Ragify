@@ -1,205 +1,149 @@
-/* ================================
-   GLOBAL HARD LOCK (NO SCROLL)
-================================ */
-* {
-  box-sizing: border-box;
+/* AI Interface Theme */
+:host {
+  --cyan: #00f2ff;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.15);
 }
 
-html, body {
+.ai-container {
+  position: relative;
   width: 100%;
-  height: 100%;
-  margin: 0;
-  overflow: hidden !important;
-  overscroll-behavior: none;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* ================================
-   AUTH PAGE BACKGROUND
-================================ */
-.auth-page {
-  position: fixed;
-  inset: 0;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
-  padding: 8px;
   overflow: hidden;
+  color: #fff;
 }
 
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.auth-page::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08), transparent 45%),
-    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.08), transparent 45%);
+/* Background Logic */
+.video-wrapper {
+  position: fixed; /* Fixed to the screen */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* Lower than card */
   pointer-events: none;
 }
 
-/* ================================
-   MAIN CARD
-================================ */
+.bg-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay {
+  display: none;
+}
+
+/* Futuristic Card */
 .auth-container {
   width: 100%;
   max-width: 420px;
-  max-height: 95vh;
-  background: rgba(255,255,255,0.96);
-  backdrop-filter: blur(10px);
-  border-radius: 22px;
-  box-shadow: 0 18px 55px rgba(0,0,0,0.3);
-  padding: 26px;
-  overflow: hidden;
-  animation: slideUp 0.45s ease-out;
+  padding: 30px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.6s ease-out;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(22px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ================================
-   ROBOT (EYES LOCKED)
-================================ */
-.robot-container {
+/* Robot & Text styling */
+/* .robot-container {
   display: flex;
   justify-content: center;
   margin-bottom: 10px;
 }
 
 .robot-svg {
-  width: 125px;
-  height: 125px;
-  animation: float 3s ease-in-out infinite;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.2));
-}
+  width: 110px;
+  height: 110px;
+  filter: drop-shadow(0 0 10px var(--cyan));
+} */
 
-/* LOCK EYEBALLS INSIDE SOCKET */
-.robot-eye {
-  overflow: hidden;
-  position: relative;
-}
-
-.robot-eye circle,
-.robot-eye ellipse {
-  clip-path: inset(0);
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-/* ================================
-   TEXT
-================================ */
 .auth-title {
-  font-size: 25px;
-  font-weight: 700;
+  font-size: 22px;
   text-align: center;
-  margin-bottom: 4px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 10px 0 5px;
 }
 
 .auth-subtitle {
-  font-size: 14px;
   text-align: center;
-  margin-bottom: 16px;
-  color: #7f8c8d;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 20px;
 }
 
-/* ================================
-   LOGIN SWITCH
-================================ */
+/* Futuristic Form Controls */
+.form-input {
+  width: 100%;
+  padding: 13px 15px;
+  margin-bottom: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: #fff;
+  outline: none;
+  transition: 0.3s;
+}
+
+.form-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+}
+
+/* Role & Type Selectors */
 .login-type-selector {
   display: flex;
-  gap: 6px;
-  padding: 4px;
-  margin-bottom: 14px;
-  background: #f8f9fa;
-  border-radius: 10px;
+  gap: 8px;
+  margin-bottom: 15px;
 }
 
 .type-btn {
   flex: 1;
-  padding: 9px;
-  font-size: 13px;
-  border: none;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: #fff;
   border-radius: 8px;
   cursor: pointer;
-  background: transparent;
-  transition: all 0.25s ease;
+  font-size: 12px;
 }
 
 .type-btn.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  background: var(--cyan);
+  color: #000;
+  border-color: var(--cyan);
+  font-weight: bold;
 }
 
-/* ================================
-   FORM
-================================ */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-
-.form-input {
-  width: 100%;
-  padding: 13px 15px;
-  font-size: 14px;
-  border-radius: 12px;
-  border: 2px solid #e1e8ed;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
-}
-
-/* ================================
-   BUTTONS
-================================ */
+/* Buttons */
 .submit-btn {
-  padding: 13px;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 12px;
-  border: none;
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  border-radius: 10px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
   cursor: pointer;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  transition: 0.3s;
+  margin-top: 10px;
 }
 
-.submit-btn.secondary {
-  background: linear-gradient(135deg, #f093fb, #f5576c);
+.submit-btn:hover {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 0 20px var(--cyan);
 }
 
-/* ================================
-   OTP
-================================ */
-.otp-section {
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 2px solid #e1e8ed;
-}
-
-/* ================================
-   GOOGLE LOGIN
-================================ */
 .google-login-section {
   margin-top: 10px;
 }
@@ -224,6 +168,7 @@ html, body {
 }
 
 .google-btn {
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -231,96 +176,32 @@ html, body {
   padding: 11px;
   border-radius: 12px;
   border: 2px solid #e1e8ed;
-  background: white;
+  background: rgb(13, 97, 207);
   cursor: pointer;
 }
 
 .google-btn img {
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
 }
 
-/* ================================
-   SWITCH
-================================ */
-.switch {
-  margin-top: 12px;
-  font-size: 13px;
+.divider {
   text-align: center;
-}
-
-.switch a {
-  font-weight: 600;
-  color: #667eea;
-  text-decoration: none;
-}
-
-/* ================================
-   SMALL HEIGHT DEVICES
-================================ */
-@media (max-height: 680px) {
-  .robot-container {
-    display: none;
-  }
-}
-
-/* ================================
-   INVALID INPUT / ERROR
-================================ */
-.form-input.invalid {
-  border-color: #e74c3c !important;
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
-}
-
-.input-error-message {
-  color: #e74c3c;
+  margin: 15px 0;
+  color: rgba(255, 255, 255, 0.4);
   font-size: 12px;
-  margin-top: 4px;
-  display: block;
 }
 
-/* ================================
-   FORGOT PASSWORD LINK
-================================ */
-.forgot-password {
-  text-align: right;
-  margin-top: 6px;
-  margin-bottom: 10px;
-}
-
-.forgot-password a {
+.switch {
+  text-align: center;
+  margin-top: 20px;
   font-size: 13px;
-  font-weight: 600;
-  color: #667eea;
-  text-decoration: none;
-  position: relative;
-  padding-bottom: 2px;
-  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-/* underline animation */
-.forgot-password a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 0%;
-  height: 2px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  transition: width 0.3s ease;
-  border-radius: 2px;
-}
+.switch a { color: var(--cyan); text-decoration: none; }
 
-/* hover effects */
-.forgot-password a:hover {
-  color: #764ba2;
-}
-
-.forgot-password a:hover::after {
-  width: 100%;
-}
-
-/* subtle glow on hover */
-.forgot-password a:hover {
-  text-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }

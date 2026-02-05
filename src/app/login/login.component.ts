@@ -20,8 +20,9 @@ import Swal from 'sweetalert2';
 export class LoginComponent implements OnInit, OnDestroy {
 
   /* -------------------- STATE -------------------- */
-  loginRole: 'user' | 'admin' = 'user';
-  loginType: 'password' | 'google' = 'password';
+ loginRole: 'user' | 'researcher' | 'admin' = 'user';
+  loginType: 'password' | 'google' | 'otp' = 'password';
+
 
   phone = '';
   password = '';
@@ -59,7 +60,10 @@ export class LoginComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+      this.loginRole = 'user';
+      this.loginType = 'password';
+  }
   ngOnDestroy(): void {}
 
   /* -------------------- PASSWORD TOGGLE -------------------- */
@@ -180,8 +184,9 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   /* -------------------- GOOGLE LOGIN -------------------- */
   loginWithGooglePopup(): void {
-    window.location.href = 'http://localhost:5000/api/auth/google';
-  }
+      const role = this.loginRole; // user | researcher
+      window.location.href = `http://localhost:5000/api/auth/google?role=${role}`;
+    }
 
   /* -------------------- ADMIN LOGIN -------------------- */
   loginAdmin(): void {
@@ -204,5 +209,58 @@ export class LoginComponent implements OnInit, OnDestroy {
         Swal.fire('Admin Login Failed', 'Invalid admin credentials', 'error');
       }
     });
+
   }
+    /* -------------------- RESEARCHER LOGIN -------------------- */
+    loginResearcher(formData: any): void {
+      this.auth.loginResearcher(formData).subscribe({
+        next: (res: any) => {
+          localStorage.setItem('token', res.token);
+          localStorage.setItem('role', 'researcher');
+
+          this.router.navigate(['/researcher-dashboard']); // ✅ THIS LINE
+
+        },
+        error: (err) => {
+          Swal.fire(
+            'Login Failed',
+            err.error?.message || 'Invalid credentials',
+            'error'
+          );
+        }
+      });
+    }
+
+    loginResearcherLogin(): void {
+      this.auth.loginResearcher({
+        email: this.email,
+        password: this.password
+      }).subscribe({
+        next: (res: any) => {
+          localStorage.setItem('token', res.token);
+          localStorage.setItem('role', res.role || 'researcher');
+
+          this.router.navigate(['/researcher-dashboard']);
+        },
+        error: (err) => {
+          Swal.fire(
+            'Login Failed',
+            err.error?.message || 'Invalid credentials',
+            'error'
+          );
+        }
+      });
+    }
+    login(): void {
+      if (this.loginRole === 'user') {
+        this.loginWithPassword();
+      }
+      else if (this.loginRole === 'researcher') {
+        this.loginResearcherLogin();
+      }
+      else if (this.loginRole === 'admin') {
+        this.loginAdmin();
+      }
+    }
+
 }

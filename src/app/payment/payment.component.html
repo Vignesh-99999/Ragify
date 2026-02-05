@@ -1,0 +1,29 @@
+<div class="payment-container">
+
+  <h2>Select Your Plan</h2>
+
+  <div class="plans">
+    <div
+      class="plan-card"
+      *ngFor="let plan of plans"
+      [class.active]="selectedPlan?.id === plan.id"
+      (click)="selectPlan(plan)"
+    >
+      <h3>{{ plan.name }}</h3>
+      <p>{{ plan.duration }}</p>
+      <h1>₹{{ plan.price }}</h1>
+    </div>
+  </div>
+
+  <div class="summary" *ngIf="selectedPlan">
+    <h3>Selected Plan</h3>
+    <p><b>{{ selectedPlan.name }}</b></p>
+    <p>Duration: {{ selectedPlan.duration }}</p>
+    <p>Amount: ₹{{ selectedPlan.price }}</p>
+  </div>
+
+  <button class="pay-btn" (click)="proceedToPay()">
+    Proceed to Pay
+  </button>
+
+</div>

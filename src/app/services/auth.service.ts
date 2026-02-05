@@ -68,4 +68,46 @@ export class AuthService {
   verifyPhoneOtp(phone: string, otp: string): Observable<any> {
     return this.http.post(`${this.BASE_API}/verify-otp`, { phone, otp });
   }
-}
+
+   
+    // =================== RESEARCHER ===================
+
+   registerResearcher(data: any) {
+      return this.http.post('http://localhost:5000/api/researcher/signup', data);
+    }
+
+
+    loginResearcher(data: any): Observable<any> {
+      return this.http.post(
+        'http://localhost:5000/api/researcher/login',
+        data
+      );
+    }
+
+    // 🔹 GET RESEARCHER PROFILE
+    getResearcherProfile() {
+      return this.http.get(
+        'http://localhost:5000/api/researcher/profile',
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('token')
+          }
+        }
+      );
+    }
+
+    // 🔹 UPDATE PROFILE
+    updateResearcherProfile(data: any) {
+      return this.http.put(
+        'http://localhost:5000/api/researcher/profile',
+        data,
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('token')
+          }
+        }
+      );
+    }
+ }
+
+

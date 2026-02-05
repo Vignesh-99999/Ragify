@@ -1,215 +1,161 @@
-/* ================================
-   GLOBAL HARD LOCK (NO SCROLL)
-================================ */
-* {
-  box-sizing: border-box;
+
+
+:host {
+  --cyan: #00f2ff;
+  --glass: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.15);
 }
 
-html, body {
+.ai-container {
+  position: relative;
   width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden !important;
-  overscroll-behavior: none;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* ================================
-   AUTH PAGE BACKGROUND
-================================ */
-.auth-page {
-  position: fixed;
-  inset: 0;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at top left, #667eea, #764ba2, #2d3436);
-  background-size: 300% 300%;
-  animation: gradientShift 12s ease infinite;
-  padding: 16px;
   overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
 }
 
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* ================================
-   MAIN CARD
-================================ */
-.auth-container {
+/* Video Background */
+.video-wrapper {
+  position: fixed; /* Fixed to the screen */
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 420px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(14px);
-  border-radius: 28px;
-  padding: 28px 32px 32px;
-  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  overflow: hidden;
-  animation: slideUp 0.4s ease-out;
+  height: 100%;
+  z-index: 0; /* Lower than card */
+  pointer-events: none;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
+.bg-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block; /* Ensure it's not inline */
 }
 
-/* ================================
-   ROBOT (EYES HARD-LOCKED)
-================================ */
-.robot-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1; /* Sits between video and card */
+  background: radial-gradient(circle, rgba(10, 25, 47, 0.4) 0%, rgba(5, 10, 20, 0.9) 100%);
+  backdrop-filter: blur(3px);
 }
 
-.robot-svg {
-  width: 125px;
-  height: 125px;
-  animation: float 3.5s ease-in-out infinite;
-  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.18));
+/* Card Styling */
+.signup-card {
+  width: 90%;
+  max-width: 440px;
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  animation: cardEntry 0.8s ease-out;
 }
 
-/* Absolute eye clamp */
-.robot-svg g {
-  clip-path: inset(0);
+.glass-header {
+  text-align: center;
+  margin-bottom: 30px;
 }
 
-.robot-svg circle,
-.robot-svg ellipse {
-  transform-box: fill-box;
-  transform-origin: center;
+.glass-header h1 {
+  font-size: 1.5rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin: 0;
+  text-shadow: 0 0 15px rgba(0, 242, 255, 0.6);
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-/* ================================
-   TEXT
-================================ */
 .auth-title {
+  font-weight: 300;
+  font-size: 1rem;
   text-align: center;
-  font-size: 26px;
-  font-weight: 800;
-  margin: 8px 0 4px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 25px;
 }
 
-.auth-subtitle {
-  text-align: center;
-  font-size: 14px;
-  color: #636e72;
-  margin-bottom: 22px;
-}
-
-/* ================================
-   FORM
-================================ */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
+/* Input Styles */
 .input-group {
   position: relative;
+  margin-bottom: 20px;
 }
 
 .form-input {
   width: 100%;
-  padding: 14px 44px;
-  border: 2px solid #edf2f7;
-  border-radius: 14px;
-  font-size: 15px;
-  background: white;
-  transition: 0.25s;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--glass-border);
+  padding: 14px 45px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+  border-color: var(--cyan);
+  background: rgba(0, 242, 255, 0.05);
 }
 
-/* Icons */
-.input-icon {
+.input-icon, .eye-icon {
   position: absolute;
-  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 18px;
-  opacity: 0.6;
-}
-
-.eye-icon {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+  font-size: 1.2rem;
   cursor: pointer;
-  font-size: 20px;
-  transition: transform 0.2s;
 }
 
-.eye-icon:hover {
-  transform: translateY(-50%) scale(1.15);
-}
+.input-icon { left: 15px; pointer-events: none; }
+.eye-icon { right: 15px; }
 
-/* ================================
-   BUTTON
-================================ */
+/* Submit Button */
 .submit-btn {
-  margin-top: 6px;
   width: 100%;
-  padding: 15px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 700;
+  padding: 16px;
+  background: transparent;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  border-radius: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
   cursor: pointer;
-  transition: 0.3s;
-  box-shadow: 0 10px 18px rgba(118, 75, 162, 0.45);
+  transition: all 0.4s;
+  position: relative;
+  overflow: hidden;
 }
 
 .submit-btn:hover:not(:disabled) {
-  transform: scale(1.02);
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 0 25px var(--cyan);
 }
 
 .submit-btn:disabled {
-  background: #c7c9cc;
+  opacity: 0.5;
   cursor: not-allowed;
+  filter: grayscale(1);
 }
 
-/* ================================
-   SWITCH
-================================ */
 .switch {
   text-align: center;
-  margin-top: 18px;
-  font-size: 14px;
+  margin-top: 25px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .switch a {
-  color: #764ba2;
-  font-weight: 600;
+  color: var(--cyan);
   text-decoration: none;
 }
 
-/* ================================
-   SMALL HEIGHT DEVICES
-================================ */
-@media (max-height: 680px) {
-  .robot-container {
-    display: none;
-  }
+@keyframes cardEntry {
+  from { opacity: 0; transform: scale(0.9) translateY(30px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
