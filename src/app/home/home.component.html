@@ -1,20 +1,61 @@
+<div class="page-container">
+  <nav class="navbar">
+    <div class="logo">
+      <span class="logo-accent">RAG</span>IFY
+    </div>
+    <div class="nav-links">
+      <button routerLink="/login" class="btn signin-btn">
+        <span>Sign In</span>
+      </button>
+      <button routerLink="/chatbot" class="btn signin-btn secondary">
+        <span>Open Chatbot</span>
+      </button>
+    </div>
+  </nav>
 
-  <!-- SIGN IN -->
-        <button
-  routerLink="/login"
-  class="btn signin-btn">
-  <span>Sign In</span>
-</button>
-<!-- GO TO CHATBOT -->
-<button
-  routerLink="/chatbot"
-  class="btn signin-btn">
-  <span>Open Chatbot</span>
-</button>
+  <main class="main-content">
+    
+    <header class="hero-section">
+      <h1 class="hero-title">Your Documents, <span class="text-gradient">Upgraded.</span></h1>
+      <p class="hero-subtitle">
+        Upload PDFs and generate Flashcards, MCQs, and Summaries in seconds. 
+        Built for students, perfected for researchers.
+      </p>
+      <div class="hero-actions">
+        <button routerLink="/chatbot" class="btn signin-btn"><span>Get Started for Free</span></button>
+      </div>
+    </header>
 
-<!-- GO TO Payment -->
-<button
-  routerLink="/payment"
-  class="btn signin-btn">
-  <span>Get Premium</span>
-</button>
+    <section class="pricing-section">
+      <h2 class="section-heading">Choose Your Level</h2>
+      <div class="pricing-grid">
+        
+        <div class="pricing-card">
+          <h3>Guest / Free</h3>
+          <div class="price">$0</div>
+          <ul class="benefit-list">
+            <li>Single PDF Upload</li>
+            <li>Basic Chatbot Q&A</li>
+            <li>10 Requests per day</li>
+          </ul>
+          <button routerLink="/chatbot" class="card-btn">Try Now</button>
+        </div>
+
+        <div class="pricing-card premium">
+          <div class="ribbon">Best for Power Users</div>
+          <h3>Researcher</h3>
+          <div class="price">$19<span>/mo</span></div>
+          <ul class="benefit-list">
+            <li><strong>Unlimited</strong> Requests</li>
+            <li><strong>Bulk Upload:</strong> Multi-PDF RAG</li>
+            <li>Automated Flashcards & MCQs</li>
+            <li>Export to Notion / PDF</li>
+          </ul>
+          <button routerLink="/upgrade" class="btn signin-btn"><span>Upgrade to Researcher</span></button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>

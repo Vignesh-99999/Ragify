@@ -59,13 +59,13 @@
   text-align: center;
   margin: 0 0 20px 0;
   pointer-events: none;
-  text-shadow: 0 0 30px rgba(172, 17, 34, 0.5);
+  text-shadow: 0 0 30px rgba(17, 38, 172, 0.5);
   animation: fadeInUp 1s ease-out;
 }
 
 .content__subtitle {
   font-size: 1.25em;
-  background: #ac1122;
+  background: #4fd1ff;
   color: #fff;
   padding: 0.45em 0.5em;
   line-height: 1;
@@ -98,16 +98,16 @@
 }
 
 .action-btn--primary {
-  background: #ac1122;
+  background: #4fd1ff;
   color: #fff;
-  border: 2px solid #ac1122;
+  border: 2px solid #4fd1ff;
 }
 
 .action-btn--primary:hover {
   background: transparent;
-  color: #ac1122;
+  color: #4fd1ff;
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(172, 17, 34, 0.4);
+  box-shadow: 0 10px 30px rgba(17, 20, 172, 0.4);
 }
 
 .action-btn--secondary {
@@ -170,8 +170,8 @@
 
 /* Home special */
 .action-btn--home {
-  border-color: #43cea2;
-  color: #43cea2;
+  border-color: #4fd1ff;
+  color: #4fd1ff;
 }
 
 .action-btn--home:hover {
