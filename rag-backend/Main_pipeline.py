@@ -19,7 +19,7 @@ client = genai.Client(
     api_key=os.getenv("GOOGLE_API_KEY")
 )
 
-def answer_question(question: str, user_id: str, document_id: str, top_k: int = 5):
+def answer_question(question: str, user_id: str, document_id: str, top_k: int = 15):
     """
     Run RAG pipeline and return answer
     

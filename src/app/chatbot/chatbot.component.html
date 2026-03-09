@@ -38,8 +38,11 @@
       <div class="nav-right">
         <button class="icon-btn" (click)="toggleTheme()"><i class="pi" [ngClass]="isDarkMode ? 'pi-sun' : 'pi-moon'"></i></button>
         <div class="profile-chip">
-          <div class="avatar"><span>{{ isLoggedIn ? userName[0] : 'G' }}</span></div>
-          <span class="user-name">{{ isLoggedIn ? userName : 'Guest User' }}</span>
+          <div class="avatar"><span>{{ (userName || 'U').charAt(0) | uppercase }}</span></div>
+          <div class="user-meta">
+            <span class="user-name">{{ isLoggedIn ? userName : 'Guest User' }}</span>
+            <span class="user-email" *ngIf="isLoggedIn && userEmail">{{ userEmail }}</span>
+          </div>
         </div>
       </div>
     </nav>
@@ -53,36 +56,77 @@
             </div>
             <div class="msg-body">
               <div class="content">
-                
+                <!-- User and QA text -->
                 <div *ngIf="msg.type === 'qa' || msg.type === 'text' || msg.role === 'user'">
-                  <div [innerHTML]="msg.role === 'user' ? msg.content : msg.content.answer || msg.content"></div>
+                  <div [innerHTML]="msg.content"></div>
                 </div>
 
+                <!-- Summaries -->
                 <div *ngIf="msg.type === 'summary'" class="summary-container">
-                  <p><strong>Summary Key Points:</strong></p>
-                  <ul>
-                    <li *ngFor="let point of msg.content.key_points">{{ point }}</li>
-                  </ul>
-                </div>
-
-                <div *ngIf="msg.type === 'card'" class="flashcard-grid">
-                  <div *ngFor="let card of msg.content.flashcards" class="card-item">
-                    <div class="card-front"><strong>Q:</strong> {{ card.front }}</div>
-                    <div class="card-back"><strong>A:</strong> {{ card.back }}</div>
+                  <p class="summary-title"><strong>Summary</strong></p>
+                  <p *ngIf="msg.content.overview">{{ msg.content.overview }}</p>
+                  <div *ngIf="msg.content.key_points?.length">
+                    <p class="summary-subtitle">Key Points:</p>
+                    <ul>
+                      <li *ngFor="let point of msg.content.key_points">{{ point }}</li>
+                    </ul>
                   </div>
                 </div>
 
-                <div *ngIf="msg.type === 'mcq'" class="mcq-container">
-                  <div *ngFor="let item of msg.content.mcqs; let i = index" class="mcq-block">
-                    <p class="question"><strong>{{i+1}}.</strong> {{ item.question }}</p>
-                    <div class="options-grid">
-                      <div *ngFor="let opt of item.options | keyvalue" class="option-pill">
-                        <strong>{{ opt.key }}:</strong> {{ opt.value }}
+                <!-- Flashcards -->
+                <div *ngIf="msg.type === 'flashcards'" class="flashcard-scroll">
+                  <div
+                    *ngFor="let card of msg.content.flashcards"
+                    class="flashcard"
+                    [class.flipped]="card.flipped"
+                    (click)="card.flipped = !card.flipped"
+                  >
+                    <div class="flashcard-inner">
+                      <div class="flashcard-face front">
+                        <span class="label">Question</span>
+                        <p>{{ card.front }}</p>
+                      </div>
+                      <div class="flashcard-face back">
+                        <span class="label">Answer</span>
+                        <p>{{ card.back }}</p>
                       </div>
                     </div>
-                    <div class="explanation">
-                      <span class="correct-badge">Correct: {{ item.correct }}</span>
-                      <p>{{ item.explanation }}</p>
+                  </div>
+                </div>
+
+                <!-- MCQs -->
+                <div *ngIf="msg.type === 'mcq'" class="mcq-wrapper">
+                  <div *ngFor="let item of msg.content.mcqs; let i = index" class="mcq-card">
+                    <p class="question"><strong>{{ i + 1 }}.</strong> {{ item.question }}</p>
+                    <div class="mcq-options">
+                      <button
+                        *ngFor="let opt of item.options | keyvalue"
+                        class="opt-btn"
+                        [ngClass]="{
+                          correct: item.showAnswer && opt.key === item.correct,
+                          wrong: item.showAnswer && opt.key === item.selected && opt.key !== item.correct
+                        }"
+                        [disabled]="item.showAnswer"
+                        (click)="selectMcqOption(msg, i, $any(opt.key))"
+
+                      >
+                        <span class="opt-key">{{ opt.key }}</span>
+                        <span class="opt-text">{{ opt.value }}</span>
+                      </button>
+                    </div>
+                    <div *ngIf="item.showAnswer" class="mcq-feedback">
+                      <div
+                        class="feedback-header"
+                        [ngClass]="{ success: item.selected === item.correct }"
+                      >
+                        <span>
+                          {{ item.selected === item.correct ? 'Your answer is correct.' : 'Your answer is not correct.' }}
+                        </span>
+                      </div>
+                      <p class="feedback-body">
+                        <span class="label">Correct answer:</span> {{ item.correct }}
+                      </p>
+                      <p class="feedback-explanation">{{ item.explanation }}</p>
                     </div>
                   </div>
                 </div>

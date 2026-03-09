@@ -2,11 +2,16 @@ import uuid
 from datetime import datetime
 from mongo_client import pdf_collection, conversation_collection
 
+
+# -----------------------------
+# PDF helpers
+# -----------------------------
 def get_pdf(document_id, user_id):
     return pdf_collection.find_one({
         "document_id": document_id,
         "user_id": user_id
     })
+
 
 def save_summary(document_id, user_id, level, data):
     pdf_collection.update_one(
@@ -18,64 +23,84 @@ def save_summary(document_id, user_id, level, data):
 # -----------------------------
 # Conversation helpers
 # -----------------------------
-def _ensure_conversation(conversation_id, user_id, document_id=None):
+def get_or_create_conversation_for_document(user_id: str, document_id: str) -> str:
+    """
+    ONE conversation per (user_id, document_id)
+    """
     existing = conversation_collection.find_one(
-        {"conversation_id": conversation_id, "user_id": user_id}
+        {"user_id": user_id, "document_id": document_id}
     )
-    if existing:
-        return existing
 
-    conversation = {
+    if existing:
+        return existing["conversation_id"]
+
+    conversation_id = str(uuid.uuid4())
+    conversation_collection.insert_one({
         "conversation_id": conversation_id,
         "user_id": user_id,
         "document_id": document_id,
         "messages": [],
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
-    }
-    conversation_collection.insert_one(conversation)
-    return conversation
+    })
+
+    return conversation_id
 
 
-def append_message(conversation_id, user_id, role, content, document_id=None, context=None):
+def append_message(
+    conversation_id: str,
+    user_id: str,
+    role: str,
+    content,
+    mode: str,
+    document_id: str,
+    context=None,
+):
     """
-    Append a message to a conversation; auto-creates if missing.
+    Append message to existing conversation.
+    FAILS LOUDLY if conversation does not exist.
     """
-    _ensure_conversation(conversation_id, user_id, document_id)
-    conversation_collection.update_one(
-        {"conversation_id": conversation_id, "user_id": user_id},
+
+    message = {
+    "id": str(uuid.uuid4()),
+    "role": role,
+    "mode": mode,        # ← stored as "mode"
+    "content": content,
+    "context": context or [],
+    "created_at": datetime.utcnow(),
+}
+
+
+    result = conversation_collection.update_one(
         {
-            "$push": {
-                "messages": {
-                    "role": role,
-                    "content": content,
-                    "context": context,
-                    "created_at": datetime.utcnow(),
-                }
-            },
-            "$set": {
-                "updated_at": datetime.utcnow(),
-                "document_id": document_id or None,
-            },
+            "conversation_id": conversation_id,
+            "user_id": user_id,
+            "document_id": document_id,
+        },
+        {
+            "$push": {"messages": message},
+            "$set": {"updated_at": datetime.utcnow()},
         },
     )
 
+    if result.matched_count == 0:
+        raise RuntimeError(
+            f"Conversation not found: {conversation_id}"
+        )
 
-def get_conversation(conversation_id, user_id):
+
+def get_conversation(conversation_id: str, user_id: str):
     return conversation_collection.find_one(
         {"conversation_id": conversation_id, "user_id": user_id},
         {"_id": 0},
     )
 
 
-def list_conversations(user_id, document_id=None):
-    """
-    List conversations for a user, optionally filtered by document_id.
-    """
+def list_conversations(user_id: str, document_id: str | None = None):
     query = {"user_id": user_id}
     if document_id:
         query["document_id"] = document_id
-    
+
     cursor = conversation_collection.find(
         query,
         {
@@ -86,31 +111,5 @@ def list_conversations(user_id, document_id=None):
             "updated_at": 1,
         },
     ).sort("updated_at", -1)
+
     return list(cursor)
-
-
-def get_or_create_conversation_for_document(user_id: str, document_id: str):
-    """
-    Get existing conversation for a document, or create a new one.
-    Returns conversation_id.
-    """
-    # Try to find existing conversation for this document
-    existing = conversation_collection.find_one(
-        {"user_id": user_id, "document_id": document_id}
-    )
-    
-    if existing:
-        return existing["conversation_id"]
-    
-    # Create new conversation
-    conversation_id = str(uuid.uuid4())
-    conversation = {
-        "conversation_id": conversation_id,
-        "user_id": user_id,
-        "document_id": document_id,
-        "messages": [],
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-    }
-    conversation_collection.insert_one(conversation)
-    return conversation_id

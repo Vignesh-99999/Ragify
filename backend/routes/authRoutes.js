@@ -163,6 +163,36 @@ router.post("/verify-email-otp", async (req, res) => {
   res.json({ msg: "OTP verified" });
 });
 
+// ================= CURRENT USER =================
+router.get("/me", async (req, res) => {
+  try {
+    const authHeader = req.header("Authorization");
+    const token = authHeader?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ message: "No token" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("name email mobile role");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      mobile: user.mobile,
+      role: user.role,
+    });
+  } catch (err) {
+    console.error("ME ROUTE ERROR:", err);
+    res.status(401).json({ message: "Invalid token" });
+  }
+});
+
 //---------------Admin Dashbord---------------
 router.get("/admin/dashboard", verifyAdmin, (req, res) => {
   res.json({ message: "Welcome Admin Dashboard" });

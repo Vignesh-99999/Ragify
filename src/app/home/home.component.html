@@ -3,12 +3,27 @@
     <div class="logo">
       <span class="logo-accent">RAG</span>IFY
     </div>
-    <div class="nav-links">
-      <button routerLink="/login" class="btn signin-btn">
-        <span>Sign In</span>
-      </button>
-      <button routerLink="/chatbot" class="btn signin-btn secondary">
-        <span>Open Chatbot</span>
+    <div class="nav-right">
+      <div *ngIf="isLoggedIn" class="user-chip">
+        <div class="avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
+        <div class="user-text">
+          <div class="name">{{ userName }}</div>
+          <div class="email" *ngIf="userEmail">{{ userEmail }}</div>
+        </div>
+        <button class="btn small" (click)="logout()">Logout</button>
+      </div>
+
+      <div *ngIf="!isLoggedIn" class="nav-links">
+        <button routerLink="/login" class="btn signin-btn">
+          <span>Sign In</span>
+        </button>
+        <button routerLink="/signup" class="btn signin-btn secondary">
+          <span>Sign Up</span>
+        </button>
+      </div>
+
+      <button class="btn signin-btn secondary chat-btn" (click)="goToChatbot()">
+        <span>{{ isLoggedIn ? 'Open Chatbot' : 'Try Chatbot' }}</span>
       </button>
     </div>
   </nav>
@@ -22,7 +37,9 @@
         Built for students, perfected for researchers.
       </p>
       <div class="hero-actions">
-        <button routerLink="/chatbot" class="btn signin-btn"><span>Get Started for Free</span></button>
+        <button class="btn signin-btn" (click)="goToChatbot()">
+          <span>{{ isLoggedIn ? 'Resume Studying' : 'Get Started for Free' }}</span>
+        </button>
       </div>
     </header>
 

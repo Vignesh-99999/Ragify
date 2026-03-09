@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +27,17 @@ export class AuthService {
 
   loginWithGoogle(): Observable<any> {
     return this.http.get(`${this.AUTH_API}/google`, { responseType: 'text' }); // redirect handled in backend
+  }
+
+  getCurrentUser(): Observable<any> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return of(null);
+    }
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`
+    });
+    return this.http.get(`${this.AUTH_API}/me`, { headers });
   }
 
   // =================== ADMIN AUTH ===================

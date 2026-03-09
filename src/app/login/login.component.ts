@@ -108,6 +108,10 @@ export class LoginComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         localStorage.setItem('token', res.token);
         localStorage.setItem('role', 'user');
+        if (res.user) {
+          localStorage.setItem('userName', res.user.name || 'User');
+          localStorage.setItem('userEmail', res.user.email || '');
+        }
 
         Swal.fire('Login Successful 🎉', 'Welcome back!', 'success')
           .then(() => this.router.navigate(['/home']));
