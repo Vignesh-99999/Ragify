@@ -22,6 +22,10 @@
         </button>
       </div>
 
+      <button class="btn signin-btn secondary" routerLink="/assistant">
+        <span>AI Assistant</span>
+      </button>
+
       <button class="btn signin-btn secondary chat-btn" (click)="goToChatbot()">
         <span>{{ isLoggedIn ? 'Open Chatbot' : 'Try Chatbot' }}</span>
       </button>

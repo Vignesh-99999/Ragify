@@ -7,6 +7,7 @@ import { HomeComponent } from './home/home.component';
 import { AdminDashboardComponent } from './dashboard/admin-dashboard.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { ChatbotComponent } from './chatbot/chatbot.component';
+import { AssistantComponent } from './assistant/assistant.component';
 import { GoogleSuccessComponent } from './google-success/google-success.component';
 
 export const routes: Routes = [
@@ -18,7 +19,8 @@ export const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent },
   { path: 'google-success', component: GoogleSuccessComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'chatbot', component: ChatbotComponent},
+  { path: 'chatbot', component: ChatbotComponent },
+  { path: 'assistant', component: AssistantComponent },
 
   // ❌ REMOVED (causes sidebar bypass)
   // { path: 'admin-dashboard', component: AdminDashboardComponent },

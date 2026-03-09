@@ -1,0 +1,101 @@
+<div class="page-container">
+  <nav class="navbar">
+    <div class="logo" (click)="goHome()">
+      <span class="logo-accent">RAG</span>IFY
+    </div>
+    <div class="nav-right">
+      <div *ngIf="isLoggedIn" class="user-chip">
+        <div class="avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
+        <div class="user-text">
+          <div class="name">{{ userName }}</div>
+          <div class="email" *ngIf="userEmail">{{ userEmail }}</div>
+        </div>
+        <button class="btn small" (click)="logout()">Logout</button>
+      </div>
+
+      <button class="btn signin-btn secondary" (click)="goChatbot()">
+        <span>Chatbot</span>
+      </button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <header class="hero-section">
+      <h1 class="hero-title">AI Writing & Research Assistant</h1>
+      <p class="hero-subtitle">
+        Rewrite sections, brainstorm new ideas, or summarize long passages using an LLM tuned for research workflows.
+      </p>
+    </header>
+
+    <section class="assistant-section">
+      <div class="assistant-card">
+        <div class="assistant-modes">
+          <button
+            class="mode-chip"
+            [class.active]="mode === 'rewrite'"
+            (click)="mode = 'rewrite'"
+          >
+            Rewrite
+          </button>
+          <button
+            class="mode-chip"
+            [class.active]="mode === 'brainstorm'"
+            (click)="mode = 'brainstorm'"
+          >
+            Brainstorm Ideas
+          </button>
+          <button
+            class="mode-chip"
+            [class.active]="mode === 'summarize'"
+            (click)="mode = 'summarize'"
+          >
+            Summarize
+          </button>
+        </div>
+
+        <div class="assistant-layout">
+          <div class="assistant-input">
+            <label class="assistant-label">
+              {{ mode === 'rewrite'
+                ? 'Paste a paragraph to rewrite in a clearer, more academic style'
+                : mode === 'brainstorm'
+                ? 'Describe the topic or question you want ideas for'
+                : 'Paste the content you want summarized' }}
+            </label>
+            <textarea
+              [(ngModel)]="inputText"
+              rows="8"
+              placeholder="Paste or type your research text here..."
+            ></textarea>
+            <button
+              class="btn signin-btn run-btn"
+              [disabled]="loading || !inputText.trim()"
+              (click)="runAssistant()"
+            >
+              <span *ngIf="!loading">Ask Assistant</span>
+              <span *ngIf="loading">Thinking...</span>
+            </button>
+            <div *ngIf="error" class="assistant-error">
+              {{ error }}
+            </div>
+          </div>
+
+          <div class="assistant-output">
+            <div class="assistant-output-header">
+              <span>Assistant Response</span>
+            </div>
+            <div class="assistant-output-body" *ngIf="outputText; else noOutput">
+              {{ outputText }}
+            </div>
+            <ng-template #noOutput>
+              <div class="assistant-placeholder">
+                The assistant’s response will appear here.
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+

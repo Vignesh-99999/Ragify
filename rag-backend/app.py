@@ -1,6 +1,8 @@
 import os
 import uuid
 import jwt
+import requests
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -9,22 +11,6 @@ from ingestion import ingest_pdf
 from summarization import summarize_book
 from Main_pipeline import answer_question
 from task_handlers import handle_summarize, handle_flashcards, handle_mcq
-
-
-from flask_cors import CORS
-app = Flask(__name__)
-
-CORS(
-    app,
-    resources={r"/*": {"origins": "*"}},
-    supports_credentials=True,
-    allow_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-)
-
-app.config["UPLOAD_FOLDER"] = "uploads"
-
-
 from mongo_utils import (
     get_pdf,
     append_message,
@@ -34,11 +20,29 @@ from mongo_utils import (
 )
 from mongo_client import pdf_collection
 
+# Load environment variables from a local .env file if present
+load_dotenv()
+
+app = Flask(__name__)
+
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+)
+
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"pdf"}
 JWT_SECRET = os.getenv("JWT_SECRET", "")
+HF_API_KEY = os.getenv("HF_API_KEY", "")
+HF_ASSISTANT_MODEL = os.getenv(
+    "HF_ASSISTANT_MODEL", "meta-llama/Llama-3.2-1B-Instruct"
+)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 
@@ -236,6 +240,114 @@ def unified_rag():
         return jsonify({"task": "mcq", **result})
         
     return jsonify({"error": "Invalid task"}), 400
+
+
+# -----------------------------
+# Research assistant (Hugging Face)
+# -----------------------------
+def call_hf_assistant(mode: str, user_input: str) -> str:
+    """
+    Calls a text-generation model on Hugging Face Inference API to assist with
+    rewriting, brainstorming, or summarizing research content.
+    """
+    if not HF_API_KEY:
+        raise RuntimeError("HF_API_KEY is not configured on the backend")
+
+    if mode == "rewrite":
+        system_instruction = (
+            "You are an AI Professor who helps researchers rewrite paragraphs in a clear, "
+            "concise, and academically appropriate style while preserving the original meaning. "
+            "Respond with only the rewritten text."
+        )
+    elif mode == "brainstorm":
+        system_instruction = (
+            "You are an AI Professor who brainstorms concrete, numbered research ideas, "
+            "angles, or follow‑up experiments. Respond with a numbered list of concise ideas."
+        )
+    elif mode == "summarize":
+        system_instruction = (
+            "You are an AI Professor who summarizes dense technical or research text. "
+            "Produce a concise, well‑structured summary focusing on key points."
+        )
+    else:
+        system_instruction = (
+            "You are an AI Professor helping with research and writing. "
+            "Respond clearly and concisely."
+        )
+
+    # Use Hugging Face router chat-completions API (OpenAI-compatible)
+    url = "https://router.huggingface.co/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+    payload = {
+        "model": HF_ASSISTANT_MODEL,
+        "messages": [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": user_input},
+        ],
+        "max_tokens": 512,
+        "temperature": 0.4,
+        "top_p": 0.9,
+    }
+
+    resp = requests.post(url, headers=headers, json=payload, timeout=60)
+    resp.raise_for_status()
+    data = resp.json()
+
+    # Chat-completions style: choices[0].message.content
+    if isinstance(data, dict):
+        choices = data.get("choices") or []
+        if choices:
+            message = choices[0].get("message") or {}
+            content = message.get("content")
+            if content:
+                return str(content).strip()
+
+    # Fallback: return raw data string
+    return str(data)
+
+
+@app.route("/research-assistant", methods=["POST"])
+@require_auth
+def research_assistant():
+    """
+    Lightweight LLM assistant for researchers, powered by Hugging Face.
+
+    Expects JSON body:
+    {
+      "mode": "rewrite" | "brainstorm" | "summarize",
+      "input": "text to work with"
+    }
+    """
+    data = request.get_json() or {}
+    mode = (data.get("mode") or "rewrite").lower()
+    user_input = (data.get("input") or "").strip()
+
+    if not user_input:
+        return jsonify({"error": "input is required"}), 400
+
+    if mode not in {"rewrite", "brainstorm", "summarize"}:
+        mode = "rewrite"
+
+    try:
+        result_text = call_hf_assistant(mode, user_input)
+    except Exception as exc:
+        return (
+            jsonify(
+                {
+                    "error": "Failed to call Hugging Face assistant",
+                    "details": str(exc),
+                }
+            ),
+            500,
+        )
+
+    return jsonify(
+        {
+            "mode": mode,
+            "input": user_input,
+            "result": result_text,
+        }
+    )
 
 
 # -----------------------------

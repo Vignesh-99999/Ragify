@@ -364,11 +364,12 @@ export class ChatbotComponent implements OnInit {
     this.isDarkMode = !this.isDarkMode;
   }
 
-  selectMcqOption(msg: any, index: number, optionKey: string): void {
+  selectMcqOption(msg: any, index: number, optionKey: unknown): void {
+    const key = String(optionKey);
     const question = msg.content?.mcqs?.[index];
     if (!question || question.showAnswer) return;
 
-    question.selected = optionKey;
+    question.selected = key;
     question.showAnswer = true;
   }
 }
