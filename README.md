@@ -64,29 +64,29 @@ It combines **LLMs, vector search, and full-stack engineering** to deliver an in
 ### 🏠 Home Interface  
 Clean and intuitive dashboard for navigating features and accessing tools.  
 
-![Home](screenshots/home.jpeg)
+![Home](Screenshots/home.jpeg)
 
 ---
 
 ### 🔐 User Authentication  
 Secure login and signup system with role-based access.  
 
-![Login](screenshots/login.jpeg)  
-![Signup](screenshots/signup.jpeg)
+![Login](Screenshots/login.jpeg)  
+![Signup](Screenshots/signup.jpeg)
 
 ---
 
 ### 💬 PDF Chat (RAG Q&A)  
 Interact with uploaded documents using context-aware question answering.  
 
-![QA](screenshots/qa.jpeg)
+![QA](Screenshots/qa.jpeg)
 
 ---
 
 ### 📝 AI Summary Generation  
 Automatically generate concise summaries from PDF content.  
 
-![Summary](screenshots/summary.jpeg)
+![Summary](Screenshots/summary.jpeg)
 
 ---
 
@@ -100,28 +100,28 @@ Convert study material into interactive flashcards for better learning.
 ### ❓ MCQ Generation  
 Generate multiple-choice questions for practice and assessment.  
 
-![MCQ](screenshots/mcq.jpeg)
+![MCQ](Screenshots/mcq.jpeg)
 
 ---
 
 ### ✍️ AI Research Assistant (Rewrite & Brainstorm)  
 Enhance research workflow with rewriting, idea generation, and content refinement.  
 
-![Rewrite](screenshots/rewrite.jpeg)
+![Rewrite](Screenshots/rewrite.jpeg)
 
 ---
 
 ### 🔍 Research Paper Search  
 Discover top relevant research papers based on user queries.  
 
-![Search](screenshots/search.jpeg)
+![Search](Screenshots/search.jpeg)
 
 ---
 
 ### 💳 Subscription Plans  
 Flexible pricing plans with upgrade options for advanced features.  
 
-![Plans](screenshots/plans.jpeg)
+![Plans](Screenshots/plans.jpeg)
 
 
 ## 🧠 System Architecture
