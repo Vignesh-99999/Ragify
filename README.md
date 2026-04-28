@@ -1,155 +1,247 @@
-## RAGify – Student & Researcher PDF Study Assistant
+# 🧠 RAGify – AI Research & Study Assistant
 
-RAGify is a full‑stack application that lets users upload PDFs, chat with them using a RAG (Retrieval‑Augmented Generation) backend, and (for paid users) use an AI research assistant for rewriting, brainstorming, and summarising content.
+RAGify is a **full-stack AI-powered research and learning platform** that allows users to upload PDFs, interact with them using a **Retrieval-Augmented Generation (RAG)** system, and leverage advanced AI tools for studying and research.
 
-The project is split into:
-- **Angular frontend** (`src`, `public`)
-- **Node/Express auth + payments backend** (`backend`)
-- **Python RAG backend** (`rag-backend`)
-- **Local Embedding Model** (`Quora_stsb_finetune`)
+It combines **LLMs, vector search, and full-stack engineering** to deliver an intelligent document understanding experience.
 
 ---
 
-### Features
+## 🚀 Key Features
 
-- **Authentication**
-  - Phone/password login for users, email/password for admins
-  - Google OAuth login for users
-  - Email OTP flows for login and password reset
+### 📄 Document Intelligence (RAG Chatbot)
 
-- **Plans & Roles**
-  - **Student (free)** — role: `user`
-    - Max **1 PDF upload / day**
-    - Max **5 RAG queries / day**
-    - Full access to PDF chatbot (Q&A, summaries, flashcards, MCQs)
-    - **AI research assistant locked** (shows lock + upgrade modal in navbar)
-  - **Researcher (paid)** — role: `researcher`
-    - **Unlimited** PDF uploads
-    - **Unlimited** RAG queries
-    - Access to `/assistant` + `/research-assistant` endpoint
-  - **Admin** — role: `admin`, with separate admin dashboard
+* Upload PDFs and interact with them using natural language
+* Context-aware **question answering**
+* Generate:
 
-- **Chatbot (RAG)**
-  - Upload PDFs (stored in MongoDB, indexed in Pinecone)
-  - Chat with the document (Q&A)
-  - Generate summaries, flashcards, and MCQs
-
-- **AI Research Assistant**
-  - Separate workspace for:
-    - Rewrite (academic style)
-    - Brainstorm ideas
-    - Summarise text
-  - Powered by Hugging Face Inference API (`/research-assistant` in `rag-backend/app.py`)
-  - Only available to **researcher** role
-
-- **Payments**
-  - Stripe Checkout integration in `backend/controllers/payment.controller.js`
-  - Plans configured in Angular `PaymentComponent`
-  - On success:
-    - User is redirected to `/payment-success`
-    - Backend route `/api/auth/upgrade-to-researcher` upgrades the user’s role and returns a new JWT
+  * 📝 Summaries
+  * 🧠 Flashcards
+  * ❓ MCQs
 
 ---
 
-### Tech Stack
+### 🧪 AI Research Assistant *(Paid Feature)*
 
-- **Frontend**: Angular 19+ (standalone components, Vite builder)
-- **Backend (Auth & Payments)**: Node.js, Express, Mongoose, Passport.js, Stripe, Nodemailer
-- **RAG Backend**: Flask, PyMongo, Pinecone, Hugging Face Inference API
-- **Database**: MongoDB
-- **Embeddings**: Fine-tuned Sentence-BERT model (`Quora_stsb_finetune`)
-
----
-
-### Project Structure
-
-- **`/src` & `/public`**: Angular 19 application containing frontend standalone components, views, and styles.
-- **`/backend`**: Node.js REST API handling JWT-based authentication, user roles, Google OAuth, and Stripe payments.
-- **`/rag-backend`**: Python/Flask application managing the uploading and chunking of PDFs, pinecone vector indexing, and interactions with Hugging Face Inference API.
-- **`/Quora_stsb_finetune`**: Contains a custom fine-tuned local Sentence-Transformers model weights for semantic similarity and text embeddings.
-- **`run-project.bat`**: A convenient batch script to spin up the entire application stack.
+* ✍️ Rewrite content in academic style
+* 💡 Brainstorm ideas
+* 📚 Summarize paragraphs
+* Designed for researchers and advanced users
 
 ---
 
-### Prerequisites
+### 🔍 Research Paper Search
 
-- Node.js (LTS)
-- npm
-- Python 3.10+
-- MongoDB instance (local or hosted)
-- Pinecone account + index
-- Stripe account (for payments)
-- Hugging Face API key (for research assistant)
+* Fetch **top 10 research papers** based on user queries
+* Helps users explore relevant academic content quickly
 
 ---
 
-### Environment Variables
+### 🔐 Authentication & User Roles
 
-#### Node/Express backend (`backend/.env`)
+* Phone/password login (users), email login (admins)
+* Google OAuth integration
+* Role-based access:
 
-```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/mean_auth
-JWT_SECRET=your_jwt_secret
+  * **Student (Free)** → Limited usage
+  * **Researcher (Paid)** → Full access
+  * **Admin** → Dashboard access
 
-EMAIL_USER=your_gmail_address
-EMAIL_PASS=your_gmail_app_password
+---
 
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+### 💳 Subscription & Payments
 
-STRIPE_SECRET_KEY=sk_test_xxx
-STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+* Integrated **Stripe Checkout**
+* Upgrade from Student → Researcher
+* Automatic role update with JWT refresh
+
+---
+## 📸 Screenshots
+
+> 🚀 A glimpse of the AI-powered research and learning experience provided by RAGify.
+
+---
+
+### 🏠 Home Interface  
+Clean and intuitive dashboard for navigating features and accessing tools.  
+
+![Home](screenshots/home.jpeg)
+
+---
+
+### 🔐 User Authentication  
+Secure login and signup system with role-based access.  
+
+![Login](screenshots/login.jpeg)  
+![Signup](screenshots/signup.jpeg)
+
+---
+
+### 💬 PDF Chat (RAG Q&A)  
+Interact with uploaded documents using context-aware question answering.  
+
+![QA](screenshots/qa.jpeg)
+
+---
+
+### 📝 AI Summary Generation  
+Automatically generate concise summaries from PDF content.  
+
+![Summary](screenshots/summary.jpeg)
+
+---
+
+### 🧠 Flashcard Generation  
+Convert study material into interactive flashcards for better learning.  
+
+![Flashcards](screenshots/flashcards.jpeg)
+
+---
+
+### ❓ MCQ Generation  
+Generate multiple-choice questions for practice and assessment.  
+
+![MCQ](screenshots/mcq.jpeg)
+
+---
+
+### ✍️ AI Research Assistant (Rewrite & Brainstorm)  
+Enhance research workflow with rewriting, idea generation, and content refinement.  
+
+![Rewrite](screenshots/rewrite.jpeg)
+
+---
+
+### 🔍 Research Paper Search  
+Discover top relevant research papers based on user queries.  
+
+![Search](screenshots/search.jpeg)
+
+---
+
+### 💳 Subscription Plans  
+Flexible pricing plans with upgrade options for advanced features.  
+
+![Plans](screenshots/plans.jpeg)
+
+
+## 🧠 System Architecture
+
+RAGify is built using a **multi-service architecture**:
+
+* **Frontend**: Angular (modern standalone components)
+* **Backend (Auth & Payments)**: Node.js + Express
+* **AI Backend (RAG Engine)**: Flask (Python)
+* **Vector DB**: Pinecone
+* **Database**: MongoDB
+* **Embeddings**: Fine-tuned Sentence-BERT model
+
+---
+
+## ⚙️ Tech Stack
+
+* **Frontend**: Angular 19+, Vite
+* **Backend**: Node.js, Express, Mongoose
+* **AI/ML**: Flask, Hugging Face API, Sentence Transformers
+* **Database**: MongoDB
+* **Vector Search**: Pinecone
+* **Auth**: JWT, Passport.js, Google OAuth
+* **Payments**: Stripe
+
+---
+
+## 🧩 Core Architecture
+
+```
+Frontend (Angular)
+        ↓
+Node.js Backend (Auth, Payments, Roles)
+        ↓
+Flask RAG Backend (LLM + Retrieval)
+        ↓
+Pinecone (Vector DB) + MongoDB
 ```
 
-#### Python RAG backend (`rag-backend/.env`)
+---
 
-```env
-MONGO_URI=mongodb://localhost:27017/mean_auth
-JWT_SECRET=your_jwt_secret   # must match backend JWT_SECRET
+## 🎯 User Plans
 
-PINECONE_API_KEY=...
-PINECONE_ENVIRONMENT=...
-PINECONE_INDEX_NAME=...
+### 🎓 Student (Free)
 
-HF_API_KEY=hf_xxx
-HF_ASSISTANT_MODEL=meta-llama/Llama-3.2-1B-Instruct
-```
-
-> Ensure `JWT_SECRET` is **identical** in both backends so tokens issued by Node are accepted by Flask.
+* 1 PDF upload/day
+* 5 queries/day
+* Access to chatbot (Q&A, summaries, flashcards, MCQs)
+* Research assistant locked
 
 ---
 
-### Install & Run
+### 🔬 Researcher (Paid)
 
-#### 1. Install root / Angular dependencies
+* Unlimited uploads & queries
+* Full AI research assistant access
+* Advanced content tools
+
+---
+
+### 🛠️ Admin
+
+* Separate dashboard
+* Full system control
+
+---
+
+## 🔄 Upgrade Flow
+
+1. User selects plan → Stripe Checkout
+2. On success → redirected to `/payment-success`
+3. Backend upgrades role → returns new JWT
+4. User gains researcher access instantly
+
+---
+
+## 📂 Project Structure
+
+```
+/src & /public        → Angular frontend
+/backend              → Node.js API (auth, payments)
+/rag-backend          → Flask RAG system
+/Quora_stsb_finetune → Custom embedding model
+```
+
+---
+
+## ⚡ Getting Started
+
+### 1. Clone & Install
 
 ```bash
-cd MainProject
 npm install
 ```
 
-#### 2. Run Angular frontend
+---
+
+### 2. Run Frontend
 
 ```bash
 npm run start
-# or: ng serve
 ```
 
-App runs at `http://localhost:4200`.
+→ [http://localhost:4200](http://localhost:4200)
 
-#### 3. Install & run Node backend
+---
+
+### 3. Run Backend (Node.js)
 
 ```bash
 cd backend
 npm install
-npm run start   # or: node server.js / nodemon server.js
+npm run start
 ```
 
-Backend runs at `http://localhost:5000`.
+→ [http://localhost:5000](http://localhost:5000)
 
-#### 4. Install & run Python RAG backend
+---
+
+### 4. Run RAG Backend (Python)
 
 ```bash
 cd rag-backend
@@ -157,52 +249,54 @@ pip install -r requirements.txt
 python app.py
 ```
 
-RAG backend runs at `http://localhost:5001`.
+→ [http://localhost:5001](http://localhost:5001)
 
 ---
 
-### Student vs Researcher Logic (Summary)
+## 🔐 Environment Variables
 
-- **Role storage**
-  - Mongoose `User` schema has `role: 'user' | 'researcher' | 'admin'`.
-  - JWT payload includes `{ id, role }`.
+### Node Backend
 
-- **Limits enforced in Flask (`rag-backend/app.py`)**
-  - Helper `is_student()` checks `g.user_role === 'user'`.
-  - `/upload-pdf`:
-    - For students, counts documents in `pdf_collection` with `uploaded_at` in today’s UTC range.
-    - If count ≥ 1 → returns 403 with “daily PDF upload limit reached” message.
-  - `/rag`:
-    - For students, aggregates `conversation_collection.messages` where:
-      - `role == 'user'`
-      - `created_at` in today’s UTC range.
-    - If count ≥ 5 → returns 403 with “daily query limit reached” message.
-  - `/research-assistant`:
-    - Returns 403 for students with a message that assistant is researcher‑only.
-
-- **Upgrade flow**
-  - Stripe success URL → `/payment-success` (frontend).
-  - `PaymentSuccessComponent` calls `AuthService.upgradeToResearcher()`:
-    - Hits `POST /api/auth/upgrade-to-researcher` on Node backend.
-    - Backend sets `user.role = 'researcher'` and returns a **new JWT** + user info.
-    - Frontend stores `token`, `role`, `userName`, `userEmail`, then redirects to `/home`.
-
-- **UI differences**
-  - Home navbar:
-    - AI Assistant button shows a **LOCKED** badge for non‑researchers.
-    - Clicking opens an **upgrade modal** instead of navigating to `/assistant`.
-  - `/assistant` route:
-    - Checks `localStorage.role === 'researcher'`; others are redirected to `/home`.
+```env
+MONGO_URI=
+JWT_SECRET=
+GOOGLE_CLIENT_ID=
+STRIPE_SECRET_KEY=
+```
 
 ---
 
-### Development Notes
+### RAG Backend
 
-- Cached Angular build files in `.angular/cache` are generated artifacts and normally should not be committed.
-- Make sure Mongo, both backends, and the frontend are all running to exercise the full flow.
-- When changing pricing or limits:
-  - **Backend**: update numeric checks in `rag-backend/app.py`.
-  - **Frontend**: update copy in `home.component.html` and `payment.component.ts`.
+```env
+PINECONE_API_KEY=
+HF_API_KEY=
+HF_ASSISTANT_MODEL=
+```
 
-# MainProject
+---
+
+## 🧠 Key Highlights
+
+* Combines **LLMs + RAG + Full-stack engineering**
+* Implements **role-based SaaS architecture**
+* Uses **real-world production tools (Stripe, Pinecone, OAuth)**
+* Includes **custom embedding model**
+
+---
+
+## 🚀 Future Improvements
+
+* Real-time document collaboration
+* Multi-document querying
+* Voice-based interaction
+* Advanced citation generation
+
+---
+
+## 👨‍💻 Author
+
+Developed by **Vignesh**
+
+* AI/ML Engineer | Full Stack Developer
 
