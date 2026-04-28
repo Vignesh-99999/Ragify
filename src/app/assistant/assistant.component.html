@@ -1,101 +1,211 @@
-<div class="page-container">
-  <nav class="navbar">
-    <div class="logo" (click)="goHome()">
-      <span class="logo-accent">RAG</span>IFY
-    </div>
-    <div class="nav-right">
-      <div *ngIf="isLoggedIn" class="user-chip">
-        <div class="avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
-        <div class="user-text">
-          <div class="name">{{ userName }}</div>
-          <div class="email" *ngIf="userEmail">{{ userEmail }}</div>
-        </div>
-        <button class="btn small" (click)="logout()">Logout</button>
-      </div>
+<div class="page-wrapper" [class.light-mode]="!isDarkMode" (mousemove)="onMove($event)">
 
-      <button class="btn signin-btn secondary" (click)="goChatbot()">
-        <span>Chatbot</span>
+  <!-- BACKGROUND -->
+  <div class="bg-layer">
+    <div class="grid-bg"></div>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+  </div>
+
+  <!-- ===================== NAVBAR (identical to research-search) ===================== -->
+  <nav class="navbar">
+    <div class="nav-logo" routerLink="/home">
+      <div class="logo-icon"><i class="pi pi-bolt"></i></div>
+      <span class="logo-text"><span class="logo-accent">RAG</span>ify</span>
+    </div>
+
+    <div class="nav-center">
+      <a class="nav-link" routerLink="/home">Home</a>
+      <a class="nav-link" routerLink="/payment">Pricing</a>
+      <div class="nav-sep"></div>
+      <a class="nav-link" routerLink="/chatbot">Chatbot</a>
+      <a class="nav-link active">AI Assistant</a>
+      <a class="nav-link" routerLink="/research-search">Search Papers</a>
+    </div>
+
+    <div class="nav-right">
+      <button class="theme-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Light mode' : 'Dark mode'">
+        <i class="pi" [ngClass]="isDarkMode ? 'pi-sun' : 'pi-moon'"></i>
       </button>
+
+      <div class="nav-avatar-wrap" (click)="toggleAvatarDropdown($event)">
+        <div class="nav-avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
+
+        <div class="avatar-menu" [class.open]="showAvatarDropdown" (click)="$event.stopPropagation()">
+          <div class="amenu-header">
+            <div class="amenu-avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
+            <div class="amenu-info">
+              <div class="amenu-name">{{ userName }}</div>
+              <div class="amenu-email">{{ userEmail }}</div>
+            </div>
+          </div>
+          <div class="amenu-divider"></div>
+          <button class="amenu-item" routerLink="/home">
+            <i class="pi pi-home amenu-icon"></i>
+            <span>Go to Home</span>
+          </button>
+          <button class="amenu-item amenu-signout" (click)="logout()">
+            <i class="pi pi-sign-out amenu-icon"></i>
+            <span>Sign out</span>
+          </button>
+        </div>
+      </div>
     </div>
   </nav>
 
-  <main class="main-content">
-    <header class="hero-section">
-      <h1 class="hero-title">AI Writing & Research Assistant</h1>
-      <p class="hero-subtitle">
-        Rewrite sections, brainstorm new ideas, or summarize long passages using an LLM tuned for research workflows.
-      </p>
-    </header>
+  <!-- ===================== MAIN LAYOUT ===================== -->
+  <div class="layout-body">
 
-    <section class="assistant-section">
-      <div class="assistant-card">
-        <div class="assistant-modes">
-          <button
-            class="mode-chip"
-            [class.active]="mode === 'rewrite'"
-            (click)="mode = 'rewrite'"
-          >
-            Rewrite
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-inner">
+
+        <div class="sidebar-section">
+          <div class="sidebar-label">MODE</div>
+          <button class="sidebar-link" [class.active]="mode === 'rewrite'" (click)="mode = 'rewrite'">
+            <i class="pi pi-pencil"></i> Rewrite
           </button>
-          <button
-            class="mode-chip"
-            [class.active]="mode === 'brainstorm'"
-            (click)="mode = 'brainstorm'"
-          >
-            Brainstorm Ideas
+          <button class="sidebar-link" [class.active]="mode === 'brainstorm'" (click)="mode = 'brainstorm'">
+            <i class="pi pi-lightbulb"></i> Brainstorm
           </button>
-          <button
-            class="mode-chip"
-            [class.active]="mode === 'summarize'"
-            (click)="mode = 'summarize'"
-          >
-            Summarize
+          <button class="sidebar-link" [class.active]="mode === 'summarize'" (click)="mode = 'summarize'">
+            <i class="pi pi-align-left"></i> Summarize
           </button>
         </div>
 
-        <div class="assistant-layout">
-          <div class="assistant-input">
-            <label class="assistant-label">
-              {{ mode === 'rewrite'
-                ? 'Paste a paragraph to rewrite in a clearer, more academic style'
-                : mode === 'brainstorm'
-                ? 'Describe the topic or question you want ideas for'
-                : 'Paste the content you want summarized' }}
-            </label>
-            <textarea
-              [(ngModel)]="inputText"
-              rows="8"
-              placeholder="Paste or type your research text here..."
-            ></textarea>
-            <button
-              class="btn signin-btn run-btn"
-              [disabled]="loading || !inputText.trim()"
-              (click)="runAssistant()"
-            >
-              <span *ngIf="!loading">Ask Assistant</span>
-              <span *ngIf="loading">Thinking...</span>
-            </button>
-            <div *ngIf="error" class="assistant-error">
-              {{ error }}
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-label">TIPS</div>
+          <div class="sidebar-tip" *ngIf="mode === 'rewrite'">
+            <i class="pi pi-info-circle tip-icon"></i>
+            Paste a rough paragraph and get a polished, academic version instantly.
+          </div>
+          <div class="sidebar-tip" *ngIf="mode === 'brainstorm'">
+            <i class="pi pi-info-circle tip-icon"></i>
+            Describe a research question or topic to generate fresh angles and ideas.
+          </div>
+          <div class="sidebar-tip" *ngIf="mode === 'summarize'">
+            <i class="pi pi-info-circle tip-icon"></i>
+            Paste long content and receive a concise, structured summary.
+          </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-label">HISTORY</div>
+          <div class="sidebar-empty-hist" *ngIf="history.length === 0">
+            No history yet.
+          </div>
+          <div class="hist-item" *ngFor="let h of history" (click)="loadHistory(h)">
+            <i class="pi pi-clock hist-icon"></i>
+            <span class="hist-text">{{ h.input | slice:0:28 }}…</span>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-view">
+
+      <!-- MODE CHIPS -->
+      <div class="mode-chips">
+        <button class="mode-chip" [class.active]="mode === 'rewrite'" (click)="mode = 'rewrite'">
+          <i class="pi pi-pencil"></i> Rewrite
+        </button>
+        <button class="mode-chip" [class.active]="mode === 'brainstorm'" (click)="mode = 'brainstorm'">
+          <i class="pi pi-lightbulb"></i> Brainstorm Ideas
+        </button>
+        <button class="mode-chip" [class.active]="mode === 'summarize'" (click)="mode = 'summarize'">
+          <i class="pi pi-align-left"></i> Summarize
+        </button>
+      </div>
+
+      <!-- ASSISTANT GRID -->
+      <div class="assistant-grid">
+
+        <!-- INPUT PANEL -->
+        <div class="panel-card input-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="panel-dot input-dot"></span>
+              <span>Your Input</span>
             </div>
+            <span class="char-counter">{{ inputText.length }} chars</span>
           </div>
 
-          <div class="assistant-output">
-            <div class="assistant-output-header">
+          <p class="panel-hint">
+            <ng-container *ngIf="mode === 'rewrite'">Paste a paragraph to rewrite in a clearer, more academic style.</ng-container>
+            <ng-container *ngIf="mode === 'brainstorm'">Describe the topic or question you want ideas for.</ng-container>
+            <ng-container *ngIf="mode === 'summarize'">Paste the content you want summarized.</ng-container>
+          </p>
+
+          <textarea
+            [(ngModel)]="inputText"
+            class="input-textarea"
+            placeholder="Paste or type your research text here..."
+            [disabled]="loading">
+          </textarea>
+
+          <div class="panel-footer">
+            <button class="run-btn" [disabled]="loading || !inputText.trim()" (click)="runAssistant()">
+              <span *ngIf="!loading"><i class="pi pi-bolt"></i> Ask Assistant</span>
+              <span *ngIf="loading" class="loading-dots">
+                <span></span><span></span><span></span>
+              </span>
+            </button>
+            <button class="clear-btn" (click)="clearAll()" *ngIf="inputText || outputText">
+              <i class="pi pi-trash"></i> Clear
+            </button>
+          </div>
+
+          <div class="error-box" *ngIf="error">
+            <i class="pi pi-exclamation-circle"></i>
+            <span>{{ error }}</span>
+          </div>
+        </div>
+
+        <!-- OUTPUT PANEL -->
+        <div class="panel-card output-panel" [class.has-output]="outputText">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="panel-dot output-dot"></span>
               <span>Assistant Response</span>
             </div>
-            <div class="assistant-output-body" *ngIf="outputText; else noOutput">
-              {{ outputText }}
-            </div>
-            <ng-template #noOutput>
-              <div class="assistant-placeholder">
-                The assistant’s response will appear here.
-              </div>
-            </ng-template>
+            <button class="copy-btn" *ngIf="outputText" (click)="copyOutput()">
+              <i class="pi pi-copy"></i> {{ copied ? 'Copied!' : 'Copy' }}
+            </button>
+          </div>
+
+          <!-- Empty state -->
+          <div class="output-placeholder" *ngIf="!outputText && !loading">
+            <div class="placeholder-icon"><i class="pi pi-sparkles"></i></div>
+            <p>The assistant's response will appear here.</p>
+          </div>
+
+          <!-- Thinking state -->
+          <div class="output-placeholder" *ngIf="loading">
+            <div class="thinking-ring"></div>
+            <p class="thinking-label">Thinking…</p>
+          </div>
+
+          <!-- Result -->
+          <div class="output-text" *ngIf="outputText && !loading">{{ outputText }}</div>
+
+          <div class="output-footer" *ngIf="outputText && !loading">
+            <span class="word-count"><i class="pi pi-file"></i> {{ wordCount }} words</span>
           </div>
         </div>
-      </div>
-    </section>
-  </main>
-</div>
 
+      </div>
+    </main>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" [class.show]="toastVisible">
+    <i class="pi pi-check-circle"></i> {{ toastMsg }}
+  </div>
+
+</div>

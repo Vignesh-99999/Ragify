@@ -1,22 +1,27 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   ViewChild,
   ElementRef,
   Inject,
-  PLATFORM_ID
+  PLATFORM_ID,
+  HostListener
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
+import Swal from 'sweetalert2';
 import { Router } from '@angular/router';
+
+type ModeType = 'qa' | 'summarize' | 'flashcards' | 'mcq';
 
 @Component({
   selector: 'app-chatbot',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './chatbot.component.html',
-  styleUrl: './chatbot.component.css',
+  styleUrls: ['./chatbot.component.css'],
   animations: [
     trigger('fadeInUp', [
       transition(':enter', [
@@ -26,7 +31,7 @@ import { Router } from '@angular/router';
     ])
   ]
 })
-export class ChatbotComponent implements OnInit {
+export class ChatbotComponent implements OnInit, OnDestroy {
 
   @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
 
@@ -44,12 +49,31 @@ export class ChatbotComponent implements OnInit {
   messages: any[] = [];
   documents: any[] = [];
   filteredDocuments: any[] = [];
+
   currentDocumentId: string | null = null;
   currentConversationId: string | null = null;
 
   userInput = '';
-  selectedMode: 'qa' | 'summary' | 'flashcards' | 'mcq' = 'qa';
+  selectedMode: ModeType = 'qa';
+
   searchQuery = '';
+  modeDropdownOpen = false;
+
+  conversationCount = 0;
+  maxConversationLimit = 5;
+
+  modeOptions: {
+    value: ModeType;
+    label: string;
+    icon: string;
+    bg: string;
+    desc: string;
+  }[] = [
+    { value: 'qa', label: 'Q&As', icon: '💬', bg: '#e8f4fe', desc: 'Ask questions from the PDF' },
+    { value: 'flashcards', label: 'Flashcards', icon: '🃏', bg: '#eef4e8', desc: 'Generate study flashcards' },
+    { value: 'summarize', label: 'Summarize', icon: '📋', bg: '#fef6e4', desc: 'Get a concise summary' },
+    { value: 'mcq', label: 'MCQs', icon: '✅', bg: '#f4e8fe', desc: 'Multiple choice quiz' }
+  ];
 
   constructor(
     private router: Router,
@@ -58,40 +82,77 @@ export class ChatbotComponent implements OnInit {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
+  /* ================= INIT ================= */
+
   ngOnInit(): void {
-    if (!this.isBrowser) return; // ⛔ stop SSR here
+    if (!this.isBrowser) return;
 
     const token = localStorage.getItem('token');
     this.isLoggedIn = !!token;
 
-    if (!this.isLoggedIn) {
-      this.router.navigate(['/login']);
-      return;
+    if (this.isLoggedIn) {
+      this.userName = localStorage.getItem('userName') || 'User';
+      this.userEmail = localStorage.getItem('userEmail') || '';
+      this.loadDocuments();
     }
 
-    this.userName = localStorage.getItem('userName') || 'User';
-    this.userEmail = localStorage.getItem('userEmail') || '';
+    this.showWelcomeMessage();
+  }
 
-    this.messages.push({
+  ngOnDestroy(): void {}
+
+  /* ================= HELPERS ================= */
+
+  isString(value: any): boolean {
+    return typeof value === 'string';
+  }
+
+  private showWelcomeMessage() {
+    this.messages = [{
       role: 'assistant',
-      content: 'Hello! Please upload a PDF to start or select an existing document.',
+      content: 'Hello! Please upload a PDF to start.',
       timestamp: this.getTime(),
       docId: null,
       type: 'text'
-    });
-
-    this.loadDocuments();
+    }];
   }
+
+  /* ================= DROPDOWN ================= */
+
+  getModeConfig(val: string) {
+    return this.modeOptions.find(m => m.value === val) || this.modeOptions[0];
+  }
+
+  selectMode(val: ModeType): void {
+    const changed = this.selectedMode !== val;
+    this.selectedMode = val;
+    this.modeDropdownOpen = false;
+
+    if (changed && this.currentDocumentId) {
+      this.onModeChange();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.mode-dropdown')) {
+      this.modeDropdownOpen = false;
+    }
+  }
+
+  /* ================= CHAT ================= */
 
   newChat(): void {
     this.currentDocumentId = null;
+    this.currentConversationId = null;
     this.userInput = '';
+    this.showWelcomeMessage();
     this.scrollToBottom();
   }
 
   deleteDocument(event: MouseEvent, docId: string): void {
     event.stopPropagation();
-
     if (!confirm('Delete this document and its chat?')) return;
 
     this.documents = this.documents.filter(d => d.document_id !== docId);
@@ -99,23 +160,33 @@ export class ChatbotComponent implements OnInit {
 
     if (this.currentDocumentId === docId) {
       this.currentDocumentId = null;
+      this.currentConversationId = null;
+      this.showWelcomeMessage();
     }
 
     this.loadHistory();
   }
 
-  /* =========================
-     PDF UPLOAD
-     ========================= */
+  clearHistory(): void {
+    this.documents = [];
+    this.messages = [];
+    this.currentDocumentId = null;
+    this.currentConversationId = null;
+
+    this.loadHistory();
+    this.showWelcomeMessage();
+  }
+
+  /* ================= PDF ================= */
+
   async onFileSelected(event: any): Promise<void> {
     if (!this.isBrowser) return;
 
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
     if (!file) return;
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      this.router.navigate(['/login']);
+    if (file.type !== 'application/pdf') {
+      Swal.fire('Error', 'Only PDF allowed', 'error');
       return;
     }
 
@@ -125,23 +196,32 @@ export class ChatbotComponent implements OnInit {
     this.isLoading = true;
 
     try {
-      const res = await fetch(`${this.apiBase}/upload-pdf`, {
+      let endpoint = `${this.apiBase}/guest/upload-pdf`;
+      const headers: any = {};
+      const token = localStorage.getItem('token');
+      
+      if (this.isLoggedIn && token) {
+        endpoint = `${this.apiBase}/upload-pdf`;
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
         body: formData
       });
 
-      if (!res.ok) throw new Error(await res.text());
-
       const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || `Server error: ${res.status}`);
+      }
 
       this.currentDocumentId = data.document_id;
-      this.currentConversationId = data.conversation_id ?? null;
 
       this.documents.unshift({
         document_id: data.document_id,
-        file_name: file.name,
-        uploaded_at: new Date().toISOString()
+        file_name: file.name
       });
 
       this.messages.push({
@@ -153,167 +233,132 @@ export class ChatbotComponent implements OnInit {
       });
 
       this.loadHistory();
-    } catch (err: unknown) {
-      if (err instanceof Error) alert(err.message);
-      else alert(err);
+
+    } catch (err: any) {
+      alert(err.message || err);
     } finally {
       this.isLoading = false;
       this.scrollToBottom();
     }
   }
 
-  /* =========================
-     SEND MESSAGE
-     ========================= */
+  /* ================= SEND ================= */
+
   async sendMessage(): Promise<void> {
-    if (!this.isBrowser || !this.userInput.trim() || !this.currentDocumentId) return;
+    if (!this.userInput.trim() || !this.currentDocumentId) return;
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    const question = this.userInput;
-    const docId = this.currentDocumentId;
+    const query = this.userInput.trim();
 
     this.messages.push({
       role: 'user',
-      content: question,
+      content: query,
       timestamp: this.getTime(),
-      docId,
+      docId: this.currentDocumentId,
       type: 'text'
     });
 
     this.userInput = '';
     this.isLoading = true;
-    this.scrollToBottom();
 
     try {
-      const res = await fetch(`${this.apiBase}/rag`, {
+      let endpoint = `${this.apiBase}/guest/rag`;
+      const headers: any = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('token');
+      
+      if (this.isLoggedIn && token) {
+        endpoint = `${this.apiBase}/rag`;
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           task: this.selectedMode,
-          query: question,
-          source: { type: 'pdf', id: docId },
-          options: {}
+          query,
+          document_id: this.currentDocumentId
         })
       });
 
-      if (!res.ok) throw new Error(await res.text());
-
       const data = await res.json();
-      this.currentConversationId = data.conversation_id ?? this.currentConversationId;
 
-      // ✅ Handle QA vs other tasks
-      if (this.selectedMode === 'qa') {
-        const backendMessages = (data.messages || []).map((m: any) => ({
-          role: m.role,
-          content: m.content,
-          timestamp: this.getTime(),
-          docId,
-          type: m.mode
-        }));
-        this.messages = this.messages.filter(m => m.docId !== docId).concat(backendMessages);
-      } else if (this.selectedMode === 'summary') {
-        this.messages.push({
-          role: 'assistant',
-          content: data.summary || data,
-          timestamp: this.getTime(),
-          docId,
-          type: 'summary'
-        });
-      } else if (this.selectedMode === 'flashcards') {
-        this.messages.push({
-          role: 'assistant',
-          content: { flashcards: data.flashcards || [] },
-          timestamp: this.getTime(),
-          docId,
-          type: 'flashcards'
-        });
-      } else if (this.selectedMode === 'mcq') {
-        this.messages.push({
-          role: 'assistant',
-          content: { mcqs: data.mcqs || [] },
-          timestamp: this.getTime(),
-          docId,
-          type: 'mcq'
-        });
+      if (!res.ok) {
+        throw new Error(data.error || `Server error: ${res.status}`);
+      }
+      
+      if (data.error) {
+        throw new Error(data.error);
       }
 
-    } catch (err: unknown) {
-      console.error(err);
-      if (err instanceof Error) alert('Error fetching response: ' + err.message);
-      else alert('Error fetching response: ' + err);
+      this.handleResponseData(data, this.selectedMode, this.currentDocumentId, query);
+
+    } catch (err: any) {
+      alert(err.message || err);
     } finally {
       this.isLoading = false;
       this.scrollToBottom();
     }
   }
 
-  /* =========================
-     DATA LOADERS
-     ========================= */
+  /* ================= RESPONSE ================= */
 
-  private async loadDocuments(): Promise<void> {
-    if (!this.isBrowser) return;
+  private handleResponseData(data: any, mode: ModeType, docId: string, userQuery?: string) {
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    if (mode === 'mcq') {
+      this.messages.push({
+        role: 'assistant',
+        content: { mcqs: data.mcqs || [] },
+        timestamp: this.getTime(),
+        docId,
+        type: 'mcq'
+      });
 
-    const res = await fetch(`${this.apiBase}/documents`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    } else if (mode === 'flashcards') {
+      this.messages.push({
+        role: 'assistant',
+        content: { flashcards: data.flashcards || [] },
+        timestamp: this.getTime(),
+        docId,
+        type: 'flashcards'
+      });
 
-    if (!res.ok) return;
+    } else if (mode === 'summarize') {
+      this.messages.push({
+        role: 'assistant',
+        content: (data.overview || data.summary) ? data : 'No summary available', 
+        timestamp: this.getTime(),
+        docId,
+        type: 'summary'
+      });
 
-    this.documents = await res.json();
-    this.loadHistory();
+    } else {
+      this.messages.push({
+        role: 'assistant',
+        content: {
+          question: userQuery,
+          answer: data.answer || data
+        },
+        timestamp: this.getTime(),
+        docId,
+        type: 'qa'
+      });
+    }
   }
 
-  private async loadConversationForDocument(documentId: string): Promise<void> {
-    if (!this.isBrowser) return;
+  /* ================= MCQ ================= */
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
+  selectMcqOption(msg: any, index: number, optionKey: unknown): void {
+    const key = String(optionKey);
+    const question = msg.content?.mcqs?.[index];
+    if (!question || question.showAnswer) return;
 
-    const listRes = await fetch(
-      `${this.apiBase}/conversations?document_id=${documentId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    if (!listRes.ok) return;
-
-    const convos = await listRes.json();
-    if (!convos.length) return;
-
-    const convoRes = await fetch(
-      `${this.apiBase}/conversations/${convos[0].conversation_id}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    if (!convoRes.ok) return;
-
-    const convo = await convoRes.json();
-
-    this.messages = this.messages
-      .filter(m => m.docId !== documentId)
-      .concat(
-        convo.messages.map((m: any) => ({
-          role: m.role,
-          content: m.content,
-          timestamp: this.getTime(),
-          docId: documentId,
-          type: m.mode
-        }))
-      );
+    question.selected = key;
+    question.showAnswer = true;
   }
 
-  loadHistory() {
+  /* ================= HISTORY ================= */
+
+  loadHistory(): void {
     this.filteredDocuments = !this.searchQuery
       ? [...this.documents]
       : this.documents.filter(d =>
@@ -321,7 +366,21 @@ export class ChatbotComponent implements OnInit {
         );
   }
 
-  private scrollToBottom() {
+  selectDocument(doc: any): void {
+    this.currentDocumentId = doc.document_id;
+    this.scrollToBottom();
+  }
+
+  /* ================= UI ================= */
+
+  toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
+  toggleTheme() { this.isDarkMode = !this.isDarkMode; }
+
+  get filteredMessages() {
+    return this.messages.filter(m => m.docId === this.currentDocumentId);
+  }
+
+  private scrollToBottom(): void {
     setTimeout(() => {
       this.myScrollContainer?.nativeElement.scrollTo({
         top: this.myScrollContainer.nativeElement.scrollHeight
@@ -333,43 +392,42 @@ export class ChatbotComponent implements OnInit {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  /* =========================
-     TEMPLATE-REQUIRED METHODS
-     ========================= */
-
-  get filteredMessages() {
-    return this.messages.filter(m => m.docId === this.currentDocumentId);
+  goHome(): void {
+    this.router.navigate(['/home']);
   }
 
-  selectDocument(doc: any) {
-    this.currentDocumentId = doc.document_id;
-    this.currentConversationId = null;
-    this.loadConversationForDocument(doc.document_id);
-    this.scrollToBottom();
+  onModeChange(): void {
+    if (!this.currentDocumentId) return;
+
+    this.messages.push({
+      role: 'assistant',
+      type: 'text',
+      content: `Switched to ${this.selectedMode.toUpperCase()} mode.`,
+      timestamp: this.getTime(),
+      docId: this.currentDocumentId
+    });
   }
 
-  clearHistory() {
-    this.documents = [];
-    this.filteredDocuments = [];
-    this.messages = [];
-    this.currentDocumentId = null;
-    this.currentConversationId = null;
-  }
+  /* ================= API ================= */
 
-  toggleSidebar() {
-    this.sidebarOpen = !this.sidebarOpen;
-  }
+  private async loadDocuments(): Promise<void> {
+    if (!this.isBrowser || !this.isLoggedIn) return;
 
-  toggleTheme() {
-    this.isDarkMode = !this.isDarkMode;
-  }
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-  selectMcqOption(msg: any, index: number, optionKey: unknown): void {
-    const key = String(optionKey);
-    const question = msg.content?.mcqs?.[index];
-    if (!question || question.showAnswer) return;
+    try {
+      const res = await fetch(`${this.apiBase}/documents`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    question.selected = key;
-    question.showAnswer = true;
+      if (!res.ok) return;
+
+      this.documents = await res.json();
+      this.loadHistory();
+
+    } catch (err) {
+      console.error(err);
+    }
   }
 }

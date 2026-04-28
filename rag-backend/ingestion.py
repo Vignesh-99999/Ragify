@@ -33,20 +33,25 @@ def ingest_pdf(pdf_path: str, user_id: str,document_id=None):
     embeddings = np.array(embeddings, dtype=np.float32)
 
     # Pinecone namespace for this user
-    namespace = f"user-{user_id}"
+    namespace = f"user-{user_id}" if user_id else "guest"
     vectors = []
 
     # Upload each chunk embedding to Pinecone
     for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
+        metadata = {
+    "text": chunk,
+    "source": pdf_path,
+    "document_id": document_id
+        }
+
+        # Only include user_id if it exists
+        if user_id is not None:
+            metadata["user_id"] = user_id
+
         vectors.append((
-            f"{document_id}-chunk-{i}",  # unique vector ID
-            emb.tolist(),                 # vector values
-            {
-                "text": chunk,            # chunk text
-                "source": pdf_path,
-                "user_id": user_id,
-                "document_id": document_id
-            }
+            f"{document_id}-chunk-{i}",
+            emb.tolist(),
+            metadata
         ))
     index.upsert(vectors=vectors, namespace=namespace)
 

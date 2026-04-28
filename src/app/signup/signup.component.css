@@ -1,215 +1,243 @@
-/* ================================
-   GLOBAL HARD LOCK (NO SCROLL)
-================================ */
 * {
   box-sizing: border-box;
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden !important;
-  overscroll-behavior: none;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0a15;
+  color: #e0e0ff;
+  overflow: hidden;
 }
 
-/* ================================
-   AUTH PAGE BACKGROUND
-================================ */
+/* Animated background */
 .auth-page {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at top left, #667eea, #764ba2, #2d3436);
-  background-size: 300% 300%;
-  animation: gradientShift 12s ease infinite;
-  padding: 16px;
-  overflow: hidden;
+  background: linear-gradient(-45deg, #0f0720, #120a2e, #0a1a3f, #1a0f2e);
+  background-size: 400% 400%;
+  animation: gradientShift 24s ease infinite;
 }
 
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* ================================
-   MAIN CARD
-================================ */
-.auth-container {
-  width: 100%;
-  max-width: 420px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(14px);
-  border-radius: 28px;
-  padding: 28px 32px 32px;
-  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  overflow: hidden;
-  animation: slideUp 0.4s ease-out;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ================================
-   ROBOT (EYES HARD-LOCKED)
-================================ */
-.robot-container {
+.split-container {
   display: flex;
+  height: 100%;
+}
+
+.left-panel, .right-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  padding: 24px;
 }
 
-.robot-svg {
-  width: 125px;
-  height: 125px;
-  animation: float 3.5s ease-in-out infinite;
-  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.18));
+.left-panel {
+  background: rgba(15, 15, 40, 0.72);
+  backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(100, 100, 255, 0.12);
 }
 
-/* Absolute eye clamp */
-.robot-svg g {
-  clip-path: inset(0);
-}
-
-.robot-svg circle,
-.robot-svg ellipse {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-/* ================================
-   TEXT
-================================ */
-.auth-title {
-  text-align: center;
-  font-size: 26px;
-  font-weight: 800;
-  margin: 8px 0 4px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.auth-subtitle {
-  text-align: center;
-  font-size: 14px;
-  color: #636e72;
-  margin-bottom: 22px;
-}
-
-/* ================================
-   FORM
-================================ */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.input-group {
+.right-panel {
+  background: rgba(8, 8, 28, 0.55);
   position: relative;
 }
 
+/* Mobile → stack vertically */
+@media (max-width: 1024px) {
+  .split-container { flex-direction: column; }
+  .right-panel { flex: none; height: 38vh; min-height: 300px; }
+  .left-panel  { flex: 1; padding: 32px 20px; }
+}
+
+/* Card */
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(20, 20, 55, 0.65);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(120, 120, 255, 0.16);
+  border-radius: 24px;
+  padding: 40px 36px;
+  box-shadow: 0 20px 70px rgba(0,0,0,0.55);
+}
+
+.card-title {
+  font-size: 2.1rem;
+  font-weight: 700;
+  text-align: center;
+  color: #f1f5ff;
+  margin: 0 0 8px;
+}
+
+.card-subtitle {
+  text-align: center;
+  color: #c7d2fe;
+  margin: 0 0 32px;
+  font-size: 1.05rem;
+}
+
+/* Form elements */
 .form-input {
   width: 100%;
-  padding: 14px 44px;
-  border: 2px solid #edf2f7;
-  border-radius: 14px;
-  font-size: 15px;
-  background: white;
-  transition: 0.25s;
+  padding: 14px 16px;
+  background: rgba(30, 30, 65, 0.7);
+  border: 1px solid rgba(140, 140, 255, 0.22);
+  border-radius: 12px;
+  color: white;
+  font-size: 1.02rem;
+  transition: all 0.2s;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+  border-color: rgba(17, 38, 172, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.22);
 }
 
-/* Icons */
-.input-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 18px;
-  opacity: 0.6;
+.form-input::placeholder {
+  color: #94a3ff88;
 }
 
-.eye-icon {
+.form-field {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-toggle {
   position: absolute;
   right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  cursor: pointer;
-  font-size: 20px;
-  transition: transform 0.2s;
-}
-
-.eye-icon:hover {
-  transform: translateY(-50%) scale(1.15);
-}
-
-/* ================================
-   BUTTON
-================================ */
-.submit-btn {
-  margin-top: 6px;
-  width: 100%;
-  padding: 15px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  background: none;
   border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 700;
+  color: #a5b4fc;
   cursor: pointer;
-  transition: 0.3s;
-  box-shadow: 0 10px 18px rgba(118, 75, 162, 0.45);
+  font-size: 0.95rem;
 }
 
-.submit-btn:hover:not(:disabled) {
-  transform: scale(1.02);
+.field-error {
+  color: #ff6b6b;
+  font-size: 0.82rem;
+  margin-top: 6px;
 }
 
-.submit-btn:disabled {
-  background: #c7c9cc;
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.main {
+  background: linear-gradient(90deg, #7c3aed, #60a5fa);
+  color: white;
+}
+
+.main:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(96, 165, 250, 0.4);
+}
+
+.main:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* ================================
-   SWITCH
-================================ */
-.switch {
+.signup-link {
   text-align: center;
-  margin-top: 18px;
-  font-size: 14px;
+  margin-top: 24px;
+  color: #c7d2fe;
+  font-size: 0.95rem;
 }
 
-.switch a {
-  color: #764ba2;
-  font-weight: 600;
+.signup-link a {
+  color: #c084fc;
   text-decoration: none;
+  font-weight: 500;
 }
 
-/* ================================
-   SMALL HEIGHT DEVICES
-================================ */
-@media (max-height: 680px) {
-  .robot-container {
-    display: none;
+.signup-link a:hover {
+  text-decoration: underline;
+}
+
+/* ────────────────────────────────────────
+   RIGHT SIDE – Chat visualization
+──────────────────────────────────────── */
+.visual-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(8, 8, 28, 0.4);
+}
+
+.chat-video,
+.chat-fallback {
+  width: 100%;
+  height: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  border-radius: 28px;
+  box-shadow: 0 24px 70px rgba(17, 38, 172, 0.5);
+  object-fit: contain;
+  background: transparent;
+}
+
+.visual-overlay {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+  padding: 10px 24px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #c7d2fe;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: #60a5fa;
+  border-radius: 50%;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.5); opacity: 0.5; }
+}
+
+@media (max-width: 1024px) {
+  .visual-overlay {
+    font-size: 0.9rem;
+    padding: 8px 20px;
+    bottom: 10%;
   }
 }

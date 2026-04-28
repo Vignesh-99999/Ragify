@@ -1,326 +1,362 @@
-/* ================================
-   GLOBAL HARD LOCK (NO SCROLL)
-================================ */
 * {
   box-sizing: border-box;
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
   margin: 0;
-  overflow: hidden !important;
-  overscroll-behavior: none;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0a15;
+  color: #e0e0ff;
+  overflow: hidden;
 }
 
-/* ================================
-   AUTH PAGE BACKGROUND
-================================ */
+/* Animated background */
 .auth-page {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: linear-gradient(-45deg, #0f0720, #120a2e, #0a1a3f, #1a0f2e);
   background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
-  padding: 8px;
-  overflow: hidden;
+  animation: gradientShift 24s ease infinite;
 }
 
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-.auth-page::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08), transparent 45%),
-    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.08), transparent 45%);
-  pointer-events: none;
-}
-
-/* ================================
-   MAIN CARD
-================================ */
-.auth-container {
-  width: 100%;
-  max-width: 420px;
-  max-height: 95vh;
-  background: rgba(255,255,255,0.96);
-  backdrop-filter: blur(10px);
-  border-radius: 22px;
-  box-shadow: 0 18px 55px rgba(0,0,0,0.3);
-  padding: 26px;
-  overflow: hidden;
-  animation: slideUp 0.45s ease-out;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(22px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ================================
-   ROBOT (EYES LOCKED)
-================================ */
-.robot-container {
+/* ────────────────────────────────────────
+   Layout
+──────────────────────────────────────── */
+.split-container {
   display: flex;
+  height: 100%;
+}
+
+.left-panel, .right-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
+  padding: 24px;
 }
 
-.robot-svg {
-  width: 125px;
-  height: 125px;
-  animation: float 3s ease-in-out infinite;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.2));
+.left-panel {
+  background: rgba(15, 15, 40, 0.72);
+  backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(100, 100, 255, 0.12);
 }
 
-/* LOCK EYEBALLS INSIDE SOCKET */
-.robot-eye {
-  overflow: hidden;
+.right-panel {
+  background: rgba(8, 8, 28, 0.55);
   position: relative;
 }
 
-.robot-eye circle,
-.robot-eye ellipse {
-  clip-path: inset(0);
+/* Mobile → stack vertically */
+@media (max-width: 1024px) {
+  .split-container { flex-direction: column; }
+  .right-panel { flex: none; height: 38vh; min-height: 300px; }
+  .left-panel  { flex: 1; padding: 32px 20px; }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-/* ================================
-   TEXT
-================================ */
-.auth-title {
-  font-size: 25px;
-  font-weight: 700;
+/* Branding */
+.brand-section {
   text-align: center;
-  margin-bottom: 4px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  margin-bottom: 48px;
+}
+
+.brand-logo {
+  font-size: 3.4rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #c084fc, #8b5cf6, #60a5fa);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  margin: 0 0 8px;
+  letter-spacing: -1px;
 }
 
-.auth-subtitle {
-  font-size: 14px;
+.brand-tagline {
+  font-size: 1.15rem;
+  color: #a5b4fc;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Card */
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(20, 20, 55, 0.65);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(120, 120, 255, 0.16);
+  border-radius: 24px;
+  padding: 40px 36px;
+  box-shadow: 0 20px 70px rgba(0,0,0,0.55);
+}
+
+.card-title {
+  font-size: 2.1rem;
+  font-weight: 700;
   text-align: center;
-  margin-bottom: 16px;
-  color: #7f8c8d;
+  color: #f1f5ff;
+  margin: 0 0 8px;
 }
 
-/* ================================
-   LOGIN SWITCH
-================================ */
-.login-type-selector {
+.card-subtitle {
+  text-align: center;
+  color: #c7d2fe;
+  margin: 0 0 32px;
+  font-size: 1.05rem;
+}
+
+/* Toggles */
+.role-toggle, .method-toggle {
   display: flex;
-  gap: 6px;
-  padding: 4px;
-  margin-bottom: 14px;
-  background: #f8f9fa;
-  border-radius: 10px;
+  background: rgba(30, 30, 70, 0.5);
+  border-radius: 12px;
+  padding: 5px;
+  margin-bottom: 28px;
 }
 
-.type-btn {
+.role-btn, .method-btn {
   flex: 1;
-  padding: 9px;
-  font-size: 13px;
+  padding: 10px;
   border: none;
   border-radius: 8px;
-  cursor: pointer;
   background: transparent;
-  transition: all 0.25s ease;
+  color: #c7d2fe;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.22s;
 }
 
-.type-btn.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+.role-btn.active, .method-btn.active {
+  background: linear-gradient(90deg, #7c3aed, #60a5fa);
   color: white;
+  box-shadow: 0 4px 16px rgba(96, 165, 250, 0.35);
 }
 
-/* ================================
-   FORM
-================================ */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-
+/* Form elements */
 .form-input {
   width: 100%;
-  padding: 13px 15px;
-  font-size: 14px;
+  padding: 14px 16px;
+  background: rgba(30, 30, 65, 0.7);
+  border: 1px solid rgba(140, 140, 255, 0.22);
   border-radius: 12px;
-  border: 2px solid #e1e8ed;
+  color: white;
+  font-size: 1.02rem;
+  transition: all 0.2s;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+  border-color:rgba(17, 38, 172, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.22);
 }
 
-/* ================================
-   BUTTONS
-================================ */
-.submit-btn {
-  padding: 13px;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 12px;
+.form-input::placeholder {
+  color: #94a3ff88;
+}
+
+.form-field {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
   border: none;
+  color: #a5b4fc;
   cursor: pointer;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  font-size: 0.95rem;
+}
+
+.field-error {
+  color: rgba(17, 38, 172, 0.5);
+  font-size: 0.82rem;
+  margin-top: 6px;
+}
+
+.forgot-link {
+  display: block;
+  text-align: right;
+  color: #a5b4fc;
+  font-size: 0.9rem;
+  margin: -8px 0 24px;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  color: rgba(17, 38, 172, 0.5);
+  text-decoration: underline;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.main {
+  background: linear-gradient(90deg, #7c3aed, #60a5fa);
   color: white;
 }
 
-.submit-btn.secondary {
-  background: linear-gradient(135deg, #f093fb, #f5576c);
+.main:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(96, 165, 250, 0.4);
 }
 
-/* ================================
-   OTP
-================================ */
-.otp-section {
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 2px solid #e1e8ed;
-}
-
-/* ================================
-   GOOGLE LOGIN
-================================ */
-.google-login-section {
-  margin-top: 10px;
-}
-
-.divider {
+.google {
+  background: rgba(17, 38, 172, 0.5);
+  border: 1px solid rgba(140,140,255,0.3);
+  color: white;
   display: flex;
   align-items: center;
-  margin: 10px 0;
-  font-size: 13px;
-  color: #a0aec0;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid #e1e8ed;
-}
-
-.divider span {
-  padding: 0 10px;
-}
-
-.google-btn {
-  display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 8px;
-  padding: 11px;
-  border-radius: 12px;
-  border: 2px solid #e1e8ed;
-  background: white;
-  cursor: pointer;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
-.google-btn img {
-  width: 18px;
-  height: 18px;
+.google-icon {
+  width: 22px;
+  height: 22px;
 }
 
-/* ================================
-   SWITCH
-================================ */
-.switch {
-  margin-top: 12px;
-  font-size: 13px;
+.or-divider {
   text-align: center;
+  color: #94a3ff;
+  margin: 16px 0;
+  font-size: 0.9rem;
 }
 
-.switch a {
-  font-weight: 600;
-  color: #667eea;
+/* .or-divider span {
+  background: rgba(17, 38, 172, 0.5);
+  padding: 0 16px;
+} */
+
+.signup-link {
+  text-align: center;
+  margin-top: 24px;
+  color: #c7d2fe;
+  font-size: 0.95rem;
+}
+
+.signup-link a {
+  color: #c084fc;
   text-decoration: none;
+  font-weight: 500;
 }
 
-/* ================================
-   SMALL HEIGHT DEVICES
-================================ */
-@media (max-height: 680px) {
-  .robot-container {
-    display: none;
+.signup-link a:hover {
+  text-decoration: underline;
+}
+
+/* ────────────────────────────────────────
+   RIGHT SIDE – Chat visualization
+──────────────────────────────────────── */
+/* ... keep all previous styles ... */
+
+/* RIGHT SIDE – Chat visualization */
+.visual-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;           /* prevent overflow on scale/resize */
+  background: rgba(8, 8, 28, 0.4); /* subtle fallback color */
+}
+
+.chat-video,
+.chat-fallback {
+  width: 100%;
+  height: 100%;
+  max-width: 520px;
+  max-height: 90vh;             /* better mobile constraint */
+  border-radius: 28px;
+  box-shadow: 0 24px 70px rgba(17, 38, 172, 0.5);
+  object-fit: contain;          /* or 'cover' — test what fits your video better */
+  background: transparent;
+}
+
+/* Make fallback image same size/behavior */
+.chat-fallback {
+  display: none;                /* hide by default — show only on error if you add JS */
+}
+
+/* Optional: subtle loading state */
+.visual-wrapper::before {
+  content: "Loading animation...";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(17, 38, 172, 0.5);
+  font-size: 1rem;
+  opacity: 0.6;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+
+.chat-video:playing ~ .visual-wrapper::before {
+  opacity: 0;
+}
+
+/* Pulse overlay – keep but make it less intrusive on small screens */
+.visual-overlay {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+  padding: 10px 24px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #c7d2fe;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+@media (max-width: 1024px) {
+  .visual-overlay {
+    font-size: 0.9rem;
+    padding: 8px 20px;
+    bottom: 10%;
   }
 }
 
-/* ================================
-   INVALID INPUT / ERROR
-================================ */
-.form-input.invalid {
-  border-color: #e74c3c !important;
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+/* Pulse animation */
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: #60a5fa;
+  border-radius: 50%;
+  animation: pulse 2s infinite ease-in-out;
 }
 
-.input-error-message {
-  color: #e74c3c;
-  font-size: 12px;
-  margin-top: 4px;
-  display: block;
-}
-
-/* ================================
-   FORGOT PASSWORD LINK
-================================ */
-.forgot-password {
-  text-align: right;
-  margin-top: 6px;
-  margin-bottom: 10px;
-}
-
-.forgot-password a {
-  font-size: 13px;
-  font-weight: 600;
-  color: #667eea;
-  text-decoration: none;
-  position: relative;
-  padding-bottom: 2px;
-  transition: all 0.3s ease;
-}
-
-/* underline animation */
-.forgot-password a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 0%;
-  height: 2px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  transition: width 0.3s ease;
-  border-radius: 2px;
-}
-
-/* hover effects */
-.forgot-password a:hover {
-  color: #764ba2;
-}
-
-.forgot-password a:hover::after {
-  width: 100%;
-}
-
-/* subtle glow on hover */
-.forgot-password a:hover {
-  text-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.5); opacity: 0.5; }
 }

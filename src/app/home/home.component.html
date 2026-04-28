@@ -1,82 +1,418 @@
-<div class="page-container">
+<div class="page-wrapper" [class.light-mode]="!isDarkMode" (mousemove)="onMove($event)">
+
+  <!-- BACKGROUND -->
+  <div class="bg-layer">
+    <div class="grid-bg"></div>
+    <div class="hero-glow"></div>
+  </div>
+
+  <!-- ===================== NAVBAR ===================== -->
   <nav class="navbar">
-    <div class="logo">
-      <span class="logo-accent">RAG</span>IFY
+    <div class="nav-logo">
+      <div class="logo-icon"><i class="pi pi-bolt"></i></div>
+      <span class="logo-text"><span class="logo-accent">RAG</span>ify</span>
     </div>
+
+    <div class="nav-center">
+      <a class="nav-link active">Home</a>
+      <a class="nav-link" routerLink="/payment">Pricing</a>
+
+      <ng-container *ngIf="isLoggedIn">
+        <div class="nav-sep"></div>
+        <a class="nav-link" (click)="goToChatbot()">Chatbot</a>
+        <a class="nav-link" (click)="onAssistantClick()">
+          AI Assistant
+          <span class="nav-pro" *ngIf="!isResearcher">PRO</span>
+        </a>
+        <a class="nav-link" (click)="onSearchClick()">
+          Search Papers
+          <span class="nav-pro" *ngIf="!isResearcher">PRO</span>
+        </a>
+      </ng-container>
+    </div>
+
     <div class="nav-right">
-      <div *ngIf="isLoggedIn" class="user-chip">
-        <div class="avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
-        <div class="user-text">
-          <div class="name">{{ userName }}</div>
-          <div class="email" *ngIf="userEmail">{{ userEmail }}</div>
+      <button class="theme-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Light mode' : 'Dark mode'">
+        <i class="pi" [ngClass]="isDarkMode ? 'pi-sun' : 'pi-moon'"></i>
+      </button>
+
+      <!-- Not logged in -->
+      <button *ngIf="!isLoggedIn" class="btn-signin" routerLink="/login">Sign In</button>
+
+      <!-- Logged in: avatar with dropdown (PrepOnyx style) -->
+      <div *ngIf="isLoggedIn" class="nav-avatar-wrap" (click)="toggleAvatarDropdown($event)">
+        <div class="nav-avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
+
+        <!-- Dropdown — matches PrepOnyx exactly -->
+        <div class="avatar-menu" [class.open]="showAvatarDropdown" (click)="$event.stopPropagation()">
+
+          <!-- User info header -->
+          <div class="amenu-header">
+            <div class="amenu-avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
+            <div class="amenu-info">
+              <div class="amenu-name">{{ userName }}</div>
+              <div class="amenu-email">{{ userEmail }}</div>
+            </div>
+          </div>
+
+          <div class="amenu-divider"></div>
+
+          <!-- Manage account -->
+          <button class="amenu-item" (click)="openManageAccount()">
+            <i class="pi pi-cog amenu-icon"></i>
+            <span>Manage account</span>
+          </button>
+
+          <!-- Sign out -->
+          <button class="amenu-item amenu-signout" (click)="logout()">
+            <i class="pi pi-sign-out amenu-icon"></i>
+            <span>Sign out</span>
+          </button>
+
         </div>
-        <button class="btn small" (click)="logout()">Logout</button>
       </div>
-
-      <div *ngIf="!isLoggedIn" class="nav-links">
-        <button routerLink="/login" class="btn signin-btn">
-          <span>Sign In</span>
-        </button>
-        <button routerLink="/signup" class="btn signin-btn secondary">
-          <span>Sign Up</span>
-        </button>
-      </div>
-
-      <button class="btn signin-btn secondary" routerLink="/assistant">
-        <span>AI Assistant</span>
-      </button>
-
-      <button class="btn signin-btn secondary chat-btn" (click)="goToChatbot()">
-        <span>{{ isLoggedIn ? 'Open Chatbot' : 'Try Chatbot' }}</span>
-      </button>
     </div>
   </nav>
 
-  <main class="main-content">
-    
-    <header class="hero-section">
-      <h1 class="hero-title">Your Documents, <span class="text-gradient">Upgraded.</span></h1>
-      <p class="hero-subtitle">
-        Upload PDFs and generate Flashcards, MCQs, and Summaries in seconds. 
-        Built for students, perfected for researchers.
+  <!-- ===================== HERO ===================== -->
+  <section class="hero-section">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <i class="pi pi-bolt badge-icon"></i>
+        AI-Powered Learning Platform
+      </div>
+
+      <h1 class="hero-title" [style.transform]="tilt">
+        Study smarter<br>
+        <span class="gradient-text">as a Student,</span><br>
+        scale deeper<br>
+        <span class="gradient-text">as a Researcher.</span>
+      </h1>
+
+      <p class="hero-sub">
+        Start free with focused limits. Upgrade to unlock unlimited PDFs,
+        questions, and the dedicated AI research assistant.
       </p>
-      <div class="hero-actions">
-        <button class="btn signin-btn" (click)="goToChatbot()">
-          <span>{{ isLoggedIn ? 'Resume Studying' : 'Get Started for Free' }}</span>
+
+      <div class="hero-cta">
+        <button class="btn-primary" (click)="goToChatbot()">
+          <i class="pi pi-bolt"></i>
+          {{ isLoggedIn ? 'Resume Studying' : 'Get Started' }}
+        </button>
+        <button class="btn-secondary" routerLink="/payment">
+          View Pricing
         </button>
       </div>
-    </header>
+    </div>
 
-    <section class="pricing-section">
-      <h2 class="section-heading">Choose Your Level</h2>
-      <div class="pricing-grid">
-        
-        <div class="pricing-card">
-          <h3>Guest / Free</h3>
-          <div class="price">$0</div>
-          <ul class="benefit-list">
-            <li>Single PDF Upload</li>
-            <li>Basic Chatbot Q&A</li>
-            <li>10 Requests per day</li>
-          </ul>
-          <button routerLink="/chatbot" class="card-btn">Try Now</button>
-        </div>
-
-        <div class="pricing-card premium">
-          <div class="ribbon">Best for Power Users</div>
-          <h3>Researcher</h3>
-          <div class="price">$19<span>/mo</span></div>
-          <ul class="benefit-list">
-            <li><strong>Unlimited</strong> Requests</li>
-            <li><strong>Bulk Upload:</strong> Multi-PDF RAG</li>
-            <li>Automated Flashcards & MCQs</li>
-            <li>Export to Notion / PDF</li>
-          </ul>
-          <button routerLink="/upgrade" class="btn signin-btn"><span>Upgrade to Researcher</span></button>
-        </div>
-
+    <div class="hero-right">
+      <div class="particle-sphere">
+        <canvas #particleCanvas></canvas>
       </div>
-    </section>
+    </div>
+  </section>
 
-  </main>
+  <!-- ===================== WHY RAGIFY ===================== -->
+  <section class="why-section">
+    <h2 class="why-title">Why Choose RAGify?</h2>
+    <p class="why-sub">Our platform combines cutting-edge AI with proven learning methodologies to deliver exceptional results.</p>
+
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon"><i class="pi pi-android"></i></div>
+        <h3>AI-Powered Learning</h3>
+        <p>Leverage cutting-edge AI technology to enhance your learning experience and get accurate answers.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon"><i class="pi pi-bolt"></i></div>
+        <h3>Instant Feedback</h3>
+        <p>Get immediate insights and suggestions to improve your performance and understanding.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon"><i class="pi pi-shield"></i></div>
+        <h3>Secure &amp; Private</h3>
+        <p>Your data is protected with enterprise-grade security measures and strict privacy controls.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon"><i class="pi pi-clock"></i></div>
+        <h3>Time Efficient</h3>
+        <p>Optimize your learning process with smart automation tools that save you hours of effort.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FEATURES ===================== -->
+  <section class="features-section">
+    <h2 class="feat-title">Explore Our Features</h2>
+    <p class="feat-sub">Each feature is designed to help you learn more effectively and achieve your goals faster.</p>
+
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon"><i class="pi pi-comments"></i></div>
+        <h3>PDF Chat &amp; Q&amp;A</h3>
+        <p>Upload any PDF and instantly ask questions. Get accurate, cited answers drawn from your document.</p>
+        <ul class="feat-list">
+          <li><i class="pi pi-check-circle"></i> Smart content analysis</li>
+          <li><i class="pi pi-check-circle"></i> Cited answers</li>
+          <li><i class="pi pi-check-circle"></i> Confidence scoring</li>
+        </ul>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><i class="pi pi-list"></i></div>
+        <h3>Flashcard Generator</h3>
+        <p>Auto-generate interactive flip-card flashcards for efficient and effective learning.</p>
+        <ul class="feat-list">
+          <li><i class="pi pi-check-circle"></i> Auto-generation</li>
+          <li><i class="pi pi-check-circle"></i> Flip animations</li>
+          <li><i class="pi pi-check-circle"></i> Progress tracking</li>
+        </ul>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><i class="pi pi-check-square"></i></div>
+        <h3>MCQ Quiz Generator</h3>
+        <p>Test your knowledge with auto-generated multiple-choice questions and instant scoring.</p>
+        <ul class="feat-list">
+          <li><i class="pi pi-check-circle"></i> Custom quiz generation</li>
+          <li><i class="pi pi-check-circle"></i> Instant scoring</li>
+          <li><i class="pi pi-check-circle"></i> Explanations included</li>
+        </ul>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><i class="pi pi-align-left"></i></div>
+        <h3>Smart Summaries</h3>
+        <p>Get concise, structured summaries with key points extracted intelligently from any PDF.</p>
+        <ul class="feat-list">
+          <li><i class="pi pi-check-circle"></i> Key point extraction</li>
+          <li><i class="pi pi-check-circle"></i> Overview generation</li>
+          <li><i class="pi pi-check-circle"></i> Confidence scores</li>
+        </ul>
+      </div>
+      <div class="feat-card feat-card-pro">
+        <div class="feat-pro-tag">PRO</div>
+        <div class="feat-icon"><i class="pi pi-android"></i></div>
+        <h3>AI Research Assistant</h3>
+        <p>A dedicated AI workspace for rewriting, brainstorming, and deep research tasks.</p>
+        <ul class="feat-list">
+          <li><i class="pi pi-check-circle"></i> Research brainstorming</li>
+          <li><i class="pi pi-check-circle"></i> Content rewriting</li>
+          <li><i class="pi pi-check-circle"></i> Deep analysis</li>
+        </ul>
+      </div>
+      <div class="feat-card feat-card-pro">
+        <div class="feat-pro-tag">PRO</div>
+        <div class="feat-icon"><i class="pi pi-search"></i></div>
+        <h3>Academic Paper Search</h3>
+        <p>Search and explore academic papers with AI-powered context and relevance ranking.</p>
+        <ul class="feat-list">
+          <li><i class="pi pi-check-circle"></i> Semantic search</li>
+          <li><i class="pi pi-check-circle"></i> Relevance ranking</li>
+          <li><i class="pi pi-check-circle"></i> AI-powered context</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRICING ===================== -->
+  <section class="pricing-section">
+    <h2 class="pricing-title">Plans built for how you learn</h2>
+    <p class="pricing-sub">Start free, upgrade when you're ready.</p>
+
+    <div class="pricing-grid">
+      <!-- Student -->
+      <div class="plan-card">
+        <div class="plan-head">
+          <div class="plan-icon plan-icon-free"><i class="pi pi-user"></i></div>
+          <div>
+            <div class="plan-name">Student</div>
+            <div class="plan-tag">Perfect to get started</div>
+          </div>
+        </div>
+        <div class="plan-price-row">
+          <span class="price-sym">₹</span>
+          <span class="price-val">0</span>
+          <span class="price-per">/forever</span>
+        </div>
+        <ul class="plan-list">
+          <li class="ok"><i class="pi pi-check"></i> Upload <strong>1 PDF per day</strong></li>
+          <li class="ok"><i class="pi pi-check"></i> Ask up to <strong>5 questions</strong> per day</li>
+          <li class="ok"><i class="pi pi-check"></i> Q&A, Summaries, Flashcards, MCQs</li>
+          <li class="no"><i class="pi pi-lock"></i> AI Research Assistant</li>
+          <li class="no"><i class="pi pi-lock"></i> Unlimited uploads</li>
+        </ul>
+        <button class="plan-btn plan-btn-free" (click)="goToChatbot()">
+          {{ isLoggedIn ? 'Go to Chatbot' : 'Start Free' }}
+        </button>
+      </div>
+
+      <!-- Researcher -->
+      <div class="plan-card plan-card-pro">
+        <div class="plan-popular">Most Popular</div>
+        <div class="plan-head">
+          <div class="plan-icon plan-icon-pro"><i class="pi pi-star"></i></div>
+          <div>
+            <div class="plan-name">Researcher</div>
+            <div class="plan-tag">For power users</div>
+          </div>
+        </div>
+        <div class="plan-price-row">
+          <span class="price-sym">₹</span>
+          <span class="price-val">100</span>
+          <span class="price-per">/month</span>
+        </div>
+        <ul class="plan-list">
+          <li class="ok"><i class="pi pi-check"></i> <strong>Unlimited</strong> PDF uploads</li>
+          <li class="ok"><i class="pi pi-check"></i> <strong>Unlimited</strong> questions</li>
+          <li class="ok"><i class="pi pi-check"></i> Full AI Research Assistant</li>
+          <li class="ok"><i class="pi pi-check"></i> Academic Paper Search</li>
+          <li class="ok"><i class="pi pi-check"></i> Advanced summaries &amp; MCQs</li>
+        </ul>
+        <button *ngIf="!isResearcher" class="plan-btn plan-btn-pro" routerLink="/payment">
+          Upgrade to Researcher
+        </button>
+        <div *ngIf="isResearcher" class="plan-active">
+          <i class="pi pi-check-circle"></i> Your Active Plan
+        </div>
+      </div>
+      <!-- PRO+ (₹300) -->
+  <div class="plan-card plan-card-pro">
+    <div class="plan-head">
+      <div class="plan-icon plan-icon-pro"><i class="pi pi-star"></i></div>
+      <div>
+        <div class="plan-name">Pro+</div>
+        <div class="plan-tag">Advanced learners</div>
+      </div>
+    </div>
+
+    <div class="plan-price-row">
+      <span class="price-sym">₹</span>
+      <span class="price-val">300</span>
+      <span class="price-per">/month</span>
+    </div>
+
+    <ul class="plan-list">
+      <li class="ok"><i class="pi pi-check"></i> Everything in Researcher</li>
+      <li class="ok"><i class="pi pi-check"></i> Faster AI responses</li>
+      <li class="ok"><i class="pi pi-check"></i> Priority processing</li>
+      <li class="ok"><i class="pi pi-check"></i> Larger PDFs support</li>
+    </ul>
+
+    <button class="plan-btn plan-btn-pro" routerLink="/payment">
+      Upgrade to Pro+
+    </button>
+  </div>
+
+  <!-- ELITE (₹500) -->
+  <div class="plan-card plan-card-pro">
+    <div class="plan-head">
+      <div class="plan-icon plan-icon-pro"><i class="pi pi-crown"></i></div>
+      <div>
+        <div class="plan-name">Elite</div>
+        <div class="plan-tag">For heavy researchers</div>
+      </div>
+    </div>
+
+    <div class="plan-price-row">
+      <span class="price-sym">₹</span>
+      <span class="price-val">500</span>
+      <span class="price-per">/month</span>
+    </div>
+
+    <ul class="plan-list">
+      <li class="ok"><i class="pi pi-check"></i> Everything in Pro+</li>
+      <li class="ok"><i class="pi pi-check"></i> Unlimited AI usage</li>
+      <li class="ok"><i class="pi pi-check"></i> Premium research tools</li>
+      <li class="ok"><i class="pi pi-check"></i> Early feature access</li>
+    </ul>
+
+    <button class="plan-btn plan-btn-pro" routerLink="/payment">
+      Go Elite
+    </button>
+  </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== CTA STRIP ===================== -->
+  <section class="cta-strip" *ngIf="!isLoggedIn">
+    <h2>Ready to study smarter?</h2>
+    <p>Join students already using RAGify to ace their exams.</p>
+    <div class="cta-btns">
+      <button class="btn-cta-white" routerLink="/signup">Get Started</button>
+      <button class="btn-cta-outline" routerLink="/payment">View Pricing →</button>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="footer-body">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <i class="pi pi-bolt"></i>
+          <span><span class="logo-accent">RAG</span>ify</span>
+        </div>
+        <p>AI-powered PDF learning for students &amp; researchers.</p>
+        <div class="footer-socials">
+          <a class="social-icon"><i class="pi pi-twitter"></i></a>
+          <a class="social-icon"><i class="pi pi-github"></i></a>
+          <a class="social-icon"><i class="pi pi-linkedin"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Product</div>
+        <a class="footer-link" (click)="goToChatbot()">Chatbot</a>
+        <a class="footer-link" routerLink="/payment">Pricing</a>
+        <a class="footer-link" (click)="onAssistantClick()">AI Assistant</a>
+        <a class="footer-link" (click)="onSearchClick()">Search Papers</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Account</div>
+        <a class="footer-link" routerLink="/login">Sign In</a>
+        <a class="footer-link" routerLink="/signup">Sign Up</a>
+        <a class="footer-link" routerLink="/payment">Upgrade</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Legal</div>
+        <a class="footer-link">Privacy Policy</a>
+        <a class="footer-link">Terms of Service</a>
+        <a class="footer-link">Cookie Policy</a>
+      </div>
+    </div>
+
+    <div class="footer-subscribe">
+      <div class="subscribe-label">
+        <i class="pi pi-envelope"></i> Subscribe to our newsletter
+      </div>
+      <div class="subscribe-form">
+        <input type="email" placeholder="Enter your email" [(ngModel)]="newsletterEmail" />
+        <button class="subscribe-btn">Subscribe →</button>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 RAGify. All rights reserved.</span>
+    </div>
+
+    <div class="footer-watermark">RAGIFY</div>
+  </footer>
+
+  <!-- ===================== UPGRADE MODAL ===================== -->
+  <div class="modal-backdrop" *ngIf="showUpgradeModal && !isResearcher" (click)="closeUpgradeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-icon"><i class="pi pi-lock"></i></div>
+      <h2>Unlock AI Research Tools</h2>
+      <p>This feature is exclusive to the Researcher plan. Upgrade to get unlimited access to the AI assistant, paper search, and more.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost-modal" (click)="closeUpgradeModal()">Maybe later</button>
+        <button class="btn-primary-modal" (click)="goToUpgrade()">Upgrade Now →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== PROFILE MODAL ===================== -->
+  <app-profile-modal
+    *ngIf="showProfileModal"
+    (closeModal)="showProfileModal = false"
+    (profileUpdated)="reloadUserProfile()">
+  </app-profile-modal>
+
 </div>

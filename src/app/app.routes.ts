@@ -9,13 +9,17 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password.compo
 import { ChatbotComponent } from './chatbot/chatbot.component';
 import { AssistantComponent } from './assistant/assistant.component';
 import { GoogleSuccessComponent } from './google-success/google-success.component';
-
+import { PaymentComponent } from './payment/payment.component';
+import { PaymentSuccessComponent } from './payment-success/payment-success.component';
+import { ResearchSearchComponent } from './research-search/research-search.component';
 export const routes: Routes = [
 
   { path: '', component: LandingComponent },
   { path: 'signup', component: SignupComponent },
   { path: 'login', component: LoginComponent },
   { path: 'home', component: HomeComponent },
+  { path: 'payment', component: PaymentComponent },
+  { path: 'payment-success', component: PaymentSuccessComponent },
   { path: 'dashboard', component: DashboardComponent },
   { path: 'google-success', component: GoogleSuccessComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
@@ -46,10 +50,19 @@ export const routes: Routes = [
           import('./admin/admin-users/admin-users.component')
             .then(m => m.AdminUsersComponent)
       },
+      
+      {
+        path: 'researchers',
+        loadComponent: () =>
+          import('./admin/admin-researchers/admin-researchers.component')
+            .then(m => m.AdminResearchersComponent)
+      },
 
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
-
+{ path: '', redirectTo: 'search', pathMatch: 'full' },
+  { path: 'search', component: ResearchSearchComponent },
   { path: '**', redirectTo: '' }
+  
 ];

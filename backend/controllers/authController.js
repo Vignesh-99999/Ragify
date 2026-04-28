@@ -5,88 +5,59 @@ const jwt = require('jsonwebtoken');
 /* ================= SIGNUP ================= */
 exports.signup = async (req, res) => {
   try {
-    const { name, email, mobile, password } = req.body;
 
-    // hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    let { name, email, mobile, password } = req.body;
 
-    // create user
-    const user = new User({
-      name,
-      email,
-      mobile,
-      password: hashedPassword
-    });
-
-    // save user
-    await user.save();
-
-    return res.status(201).json({ msg: 'Signup successful' });
-
-  } catch (error) {
-    console.error(error);
-
-    // ✅ DUPLICATE KEY ERROR (email or phone)
-    if (error.code === 11000) {
-      if (error.keyPattern.email) {
-        return res.status(400).json({ msg: 'Email already exists' });
-      }
-      if (error.keyPattern.mobile) {
-        return res.status(400).json({ msg: 'Phone number already exists' });
-      }
+    if (!mobile) {
+      return res.status(400).json({ message: "Mobile is required" });
     }
 
-    return res.status(500).json({ msg: 'Internal Server Error' });
-  }
-};
+    mobile = String(mobile).replace(/\s+/g, '').trim();
 
-/* ================= SIGNUP ================= */
-exports.signup = async (req, res) => {
-  try {
-    const { name, email, mobile, password } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (!/^\d{10}$/.test(mobile)) {
+      return res.status(400).json({ message: "Mobile must be 10 digits" });
+    }
+
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ message: "EMAIL_EXISTS" });
+    }
+
+    const existingMobile = await User.findOne({ mobile });
+    if (existingMobile) {
+      return res.status(400).json({ message: "MOBILE_EXISTS" });
+    }
 
     const user = new User({
       name,
       email,
       mobile,
-      password: hashedPassword
+      password
     });
 
     await user.save();
-    return res.status(201).json({ msg: 'Signup successful' });
+
+    res.status(201).json({ message: "Signup successful" });
 
   } catch (error) {
-    // optional: only log errors to a file, not CMD
-    if (error.code === 11000) {
-      if (error.keyPattern.email) return res.status(400).json({ msg: 'Email already exists' });
-      if (error.keyPattern.mobile) return res.status(400).json({ msg: 'Phone number already exists' });
-    }
-    return res.status(500).json({ msg: 'Internal Server Error' });
+    console.error("SIGNUP ERROR:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
-
 
 /* ================= LOGIN ================= */
 exports.login = async (req, res) => {
   try {
-    console.log('LOGIN BODY:', req.body);
-
     const { mobile, password } = req.body;
 
     const cleanMobile = String(mobile).trim();
-    console.log('CLEAN MOBILE:', cleanMobile);
-
+   
+    // Allow both students (user) and researchers to log in, but not admins here
     const user = await User.findOne({
       mobile: cleanMobile,
-      role: 'user'
+      role: { $ne: 'admin' }
     }).select('+password');
-
-    console.log('USER FROM DB:', user); // 🔥 ADD THIS
 
     if (!user) {
       console.log('USER NOT FOUND');
@@ -108,7 +79,6 @@ exports.login = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log('PASSWORD MATCH:', isMatch); // 🔥 ADD THIS
 
     if (!isMatch) {
       console.log('PASSWORD MISMATCH');
@@ -116,7 +86,7 @@ exports.login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: 'user' },
+      { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -124,7 +94,7 @@ exports.login = async (req, res) => {
     res.status(200).json({
       message: 'Login successful',
       token,
-      role: 'user',
+      role: user.role,
       user: {
         id: user._id,
         name: user.name,

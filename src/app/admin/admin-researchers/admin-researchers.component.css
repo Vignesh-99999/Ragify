@@ -1,0 +1,160 @@
+/* ===== ROOT CONTAINER ===== */
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f1f5f9; /* light gray background */
+  padding: 24px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== PAGE CONTAINER ===== */
+.page-container {
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* ===== NAVBAR ===== */
+.page-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 30px;
+  margin-bottom: 25px;
+  border-radius: 16px;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.page-navbar h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* ===== BADGE ===== */
+.count-badge {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+/* ===== TABLE CARD ===== */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.04);
+}
+
+/* ===== TABLE HEADER ===== */
+.users-table thead {
+  background: #f8fafc;
+}
+
+.users-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* ===== TABLE BODY ===== */
+.users-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+/* ===== ROW STYLING ===== */
+.users-table tr {
+  transition: all 0.2s ease;
+}
+
+.users-table tr:not(:last-child) {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.users-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* ===== USER INFO ===== */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ===== AVATAR ===== */
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty {
+  text-align: center;
+  padding: 25px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+/* ===== STATUS ===== */
+.status {
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status.active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.status.inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+/* ===== SUBSCRIPTION ===== */
+.plan {
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.plan.monthly {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.plan.quarterly {
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+}
+
+.plan.yearly {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+}

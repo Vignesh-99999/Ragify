@@ -2,7 +2,12 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const passport = require("passport");
+const searchRoutes = require("./routes/searchRoutes");
 require("dotenv").config();
+
+
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // ================= APP INIT =================
 const app = express();
@@ -27,10 +32,15 @@ mongoose
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
+const paymentRoutes = require("./routes/payment.routes");
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/forgot-password", forgotPasswordRoutes);
+app.use('/api/payment', paymentRoutes);
+
+
 
 console.log("Forgot password routes loaded ✅");
 
@@ -79,7 +89,7 @@ app.get(
     );
   }
 );
-
+app.use("/api/search", searchRoutes);
 // ================= SERVER =================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

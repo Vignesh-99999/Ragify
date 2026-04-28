@@ -1,0 +1,259 @@
+<div class="page-wrapper" [class.light-mode]="!isDarkMode" (mousemove)="onMove($event)">
+
+  <!-- BACKGROUND -->
+  <div class="bg-layer">
+    <div class="grid-bg"></div>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+  </div>
+
+  <!-- ===================== NAVBAR (identical to home) ===================== -->
+  <nav class="navbar">
+    <div class="nav-logo" routerLink="/home">
+      <div class="logo-icon"><i class="pi pi-bolt"></i></div>
+      <span class="logo-text"><span class="logo-accent">RAG</span>ify</span>
+    </div>
+
+    <div class="nav-center">
+      <a class="nav-link" routerLink="/home">Home</a>
+      <a class="nav-link" routerLink="/payment">Pricing</a>
+      <div class="nav-sep"></div>
+      <a class="nav-link" routerLink="/chatbot">Chatbot</a>
+      <a class="nav-link" routerLink="/assistant">AI Assistant</a>
+      <a class="nav-link active">Search Papers</a>
+    </div>
+
+    <div class="nav-right">
+      <button class="theme-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Light mode' : 'Dark mode'">
+        <i class="pi" [ngClass]="isDarkMode ? 'pi-sun' : 'pi-moon'"></i>
+      </button>
+
+      <div class="nav-avatar-wrap" (click)="toggleAvatarDropdown($event)">
+        <div class="nav-avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
+
+        <div class="avatar-menu" [class.open]="showAvatarDropdown" (click)="$event.stopPropagation()">
+          <div class="amenu-header">
+            <div class="amenu-avatar">{{ (userName || 'U').charAt(0) | uppercase }}</div>
+            <div class="amenu-info">
+              <div class="amenu-name">{{ userName }}</div>
+              <div class="amenu-email">{{ userEmail }}</div>
+            </div>
+          </div>
+          <div class="amenu-divider"></div>
+          <button class="amenu-item" routerLink="/home">
+            <i class="pi pi-home amenu-icon"></i>
+            <span>Go to Home</span>
+          </button>
+          <button class="amenu-item amenu-signout" (click)="logout()">
+            <i class="pi pi-sign-out amenu-icon"></i>
+            <span>Sign out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== MAIN LAYOUT ===================== -->
+  <div class="layout-body">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-inner">
+
+        <div class="sidebar-section">
+          <div class="sidebar-label">TIME PERIOD</div>
+          <button
+            *ngFor="let f of timeFilters"
+            class="sidebar-link"
+            [class.active]="activeTimeFilter === f.value"
+            (click)="activeTimeFilter = f.value; search()">
+            {{ f.label }}
+          </button>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-label">SORT BY</div>
+          <button
+            *ngFor="let s of sortOptions"
+            class="sidebar-link"
+            [class.active]="activeSortBy === s.value"
+            (click)="activeSortBy = s.value; search()">
+            {{ s.label }}
+          </button>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-label">CONTENT TYPE</div>
+          <button
+            *ngFor="let t of typeFilters"
+            class="sidebar-link"
+            [class.active]="activeType === t.value"
+            (click)="activeType = t.value">
+            <i class="pi" [ngClass]="t.icon"></i>
+            {{ t.label }}
+          </button>
+        </div>
+
+        <!-- Stats chip -->
+        <div class="sidebar-stats" *ngIf="results.length > 0">
+          <span class="stat-count">{{ results.length }}</span>
+          <span class="stat-label">papers found</span>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-view">
+
+      <!-- SEARCH BAR -->
+      <div class="search-bar-wrap">
+        <div class="search-bar">
+          <div class="search-icon-wrap"><i class="pi pi-search"></i></div>
+          <input
+            [(ngModel)]="query"
+            placeholder="Search academic papers, authors, topics..."
+            (keyup.enter)="search()"
+            [disabled]="loading"
+          />
+          <button class="search-btn" (click)="search()" [disabled]="loading">
+            <span *ngIf="!loading"><i class="pi pi-bolt"></i> Search</span>
+            <span *ngIf="loading" class="loading-dots">
+              <span></span><span></span><span></span>
+            </span>
+          </button>
+        </div>
+
+        <!-- Active query chip -->
+        <div class="query-chip" *ngIf="lastQuery && !loading">
+          <i class="pi pi-tag"></i>
+          Results for: <strong>{{ lastQuery }}</strong>
+          <button class="chip-clear" (click)="clearResults()"><i class="pi pi-times"></i></button>
+        </div>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div class="empty-state" *ngIf="results.length === 0 && !loading && !lastQuery">
+        <div class="empty-icon"><i class="pi pi-book"></i></div>
+        <h3>Search academic papers</h3>
+        <p>Type a topic, author name, or keyword to find research papers from across the web.</p>
+        <div class="suggested-tags">
+          <button class="tag-btn" *ngFor="let tag of suggestedTopics" (click)="quickSearch(tag)">{{ tag }}</button>
+        </div>
+      </div>
+
+      <!-- NO RESULTS -->
+      <div class="empty-state" *ngIf="results.length === 0 && !loading && lastQuery">
+        <div class="empty-icon"><i class="pi pi-search-minus"></i></div>
+        <h3>No results found</h3>
+        <p>Try different keywords or check your filters.</p>
+      </div>
+
+      <!-- LOADING SKELETON -->
+      <div class="skeleton-list" *ngIf="loading">
+        <div class="skeleton-card" *ngFor="let s of [1,2,3]">
+          <div class="skel-line skel-title"></div>
+          <div class="skel-line skel-sub"></div>
+          <div class="skel-line skel-body"></div>
+          <div class="skel-line skel-body short"></div>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="results-list" *ngIf="results.length > 0 && !loading">
+
+        <div class="result-count">
+          <span>{{ results.length }} results</span>
+          <span class="result-query">for "<strong>{{ lastQuery }}</strong>"</span>
+        </div>
+
+        <div class="paper-card" *ngFor="let paper of results; let i = index"
+             [style.animation-delay]="(i * 0.05) + 's'">
+
+          <!-- Card header row -->
+          <div class="card-head">
+            <div class="card-badges">
+              <span class="badge-pdf" *ngIf="paper.pdf">
+                <i class="pi pi-file-pdf"></i> PDF
+              </span>
+              <span class="badge-year" *ngIf="paper.year">{{ paper.year }}</span>
+              <span class="badge-cited" *ngIf="paper.citations">
+                <i class="pi pi-users"></i> {{ paper.citations }} cited
+              </span>
+            </div>
+            <button class="card-save-btn" (click)="toggleSave(paper)" [class.saved]="paper.saved">
+              <i class="pi" [ngClass]="paper.saved ? 'pi-bookmark-fill' : 'pi-bookmark'"></i>
+            </button>
+          </div>
+
+          <!-- Title -->
+          <h3 class="card-title">
+            <a [href]="paper.link" target="_blank" rel="noopener">{{ paper.title }}</a>
+          </h3>
+
+          <!-- Authors -->
+          <div class="card-authors" *ngIf="paper.authors">
+            <i class="pi pi-user"></i>
+            <span>{{ paper.authors }}</span>
+          </div>
+
+          <!-- Source / Journal -->
+          <div class="card-source" *ngIf="paper.source">
+            <i class="pi pi-globe"></i>
+            <span>{{ paper.source }}</span>
+          </div>
+
+          <!-- Abstract snippet -->
+          <p class="card-abstract" *ngIf="paper.abstract">{{ paper.abstract }}</p>
+
+          <!-- Actions -->
+          <div class="card-actions">
+            <a class="action-btn btn-view" [href]="paper.link" target="_blank">
+              <i class="pi pi-external-link"></i> View Paper
+            </a>
+            <a class="action-btn btn-pdf" *ngIf="paper.pdf" [href]="paper.pdf" target="_blank">
+              <i class="pi pi-download"></i> PDF
+            </a>
+            <button class="action-btn btn-cite" (click)="openCite(paper)">
+              <i class="pi pi-quote-right"></i> Cite
+            </button>
+            <button class="action-btn btn-share" (click)="copyLink(paper.link)">
+              <i class="pi pi-share-alt"></i> Share
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- CITE MODAL -->
+  <div class="modal-backdrop" *ngIf="citeModal" (click)="citeModal = false">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="pi pi-quote-right"></i> Citation</h3>
+        <button class="modal-close" (click)="citeModal = false"><i class="pi pi-times"></i></button>
+      </div>
+      <div class="cite-formats">
+        <button class="cite-tab" *ngFor="let f of citeFormats"
+                [class.active]="activeCiteFormat === f"
+                (click)="activeCiteFormat = f">{{ f }}</button>
+      </div>
+      <div class="cite-text">{{ getCitation(activeCiteFormat) }}</div>
+      <button class="btn-copy" (click)="copyCitation()">
+        <i class="pi pi-copy"></i> Copy Citation
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" [class.show]="toastVisible">
+    <i class="pi pi-check-circle"></i> {{ toastMsg }}
+  </div>
+
+</div>

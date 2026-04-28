@@ -1,0 +1,60 @@
+<!-- TOP NAVBAR -->
+<div class="page-navbar">
+  <h2>🧑‍🔬 Researchers</h2>
+
+  <div class="nav-actions">
+    <span class="count-badge">{{ researchers.length }} Researchers</span>
+  </div>
+</div>
+
+<!-- TABLE -->
+<table class="users-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Status</th>
+      <th>Subscription</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let user of researchers">
+
+      <!-- NAME -->
+      <td>
+        <div class="user-info">
+          <div class="avatar">
+            {{ user.name.charAt(0) }}
+          </div>
+          <span>{{ user.name }}</span>
+        </div>
+      </td>
+
+      <!-- EMAIL -->
+      <td>{{ user.email }}</td>
+
+      <!-- STATUS -->
+      <td>
+        <span class="status active" *ngIf="user.isActive">Active</span>
+        <span class="status inactive" *ngIf="!user.isActive">Inactive</span>
+      </td>
+
+      <!-- SUBSCRIPTION -->
+      <td>
+        <span class="plan monthly" *ngIf="user.subscriptionType === 'monthly'">Monthly</span>
+        <span class="plan quarterly" *ngIf="user.subscriptionType === 'quarterly'">Quarterly</span>
+        <span class="plan yearly" *ngIf="user.subscriptionType === 'yearly'">Yearly</span>
+      </td>
+
+    </tr>
+
+    <!-- EMPTY -->
+    <tr *ngIf="researchers.length === 0">
+      <td colspan="4" class="empty">
+        No researchers found 😕
+      </td>
+    </tr>
+
+  </tbody>
+</table>

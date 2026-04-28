@@ -34,86 +34,29 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/* =========================
-   SIGNUP
-========================= */
-router.post('/signup', async (req, res) => {
-  try {
-    const { name, email, mobile, password, confirmPassword } = req.body;
-
-    // Password match check
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
-    // Mobile validation
-    if (!/^\d{10}$/.test(mobile)) {
-      return res.status(400).json({ message: 'Mobile number must be exactly 10 digits' });
-    }
-
-    // Check existing user
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: 'Email already registered' });
-    }
-
-    const user = new User({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      mobile: mobile.trim(),
-      password
-    });
-
-    await user.save();
-
-    res.status(201).json({ message: 'Signup successful' });
-
-  } catch (error) {
-    console.error('SIGNUP ERROR 👉', error);
-
-    // Mongoose validation error
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: error.message });
-    }
-
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-
-/* =========================
-   LOGIN WITH PASSWORD
-========================= */
-// router.post("/login", async (req, res) => {
-//   console.log('LOGIN ROUTE HIT');
-//     try {
-//       const { email, password } = req.body;
-
-//       const user = await User.findOne({ email });
-//       if (!user)
-//         return res.status(400).json({ message: "Invalid credentials" });
-
-//       const isMatch = await bcrypt.compare(password, user.password);
-//       if (!isMatch)
-//         return res.status(400).json({ message: "Invalid credentials" });
-
-//       const token = jwt.sign(
-//         { id: user._id, role: user.role },
-//         process.env.JWT_SECRET,
-//         { expiresIn: "1d" }
-//       );
-
-//       res.json({
-//         token,
-//         role: user.role
-//       });
-
-//     } catch (err) {
-//       res.status(500).json({ message: "Server error" });
-//     }
-//   });
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
+
+// =========================
+//   AUTH MIDDLEWARE (USER)
+// =========================
+const requireUserAuth = (req, res, next) => {
+  const authHeader = req.header("Authorization");
+  const token = authHeader?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "No token" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    console.error("AUTH ERROR:", err);
+    return res.status(401).json({ message: "Invalid token" });
+  }
+};
 
 // ================= SEND EMAIL OTP =================
 router.post("/send-email-otp", async (req, res) => {
@@ -148,7 +91,10 @@ router.post("/verify-email-otp", async (req, res) => {
   const { email, otp } = req.body;
 
   const record = otpStore.get(email);
-  if (!record) return res.status(400).json({ msg: "OTP not found" });
+
+  if (!record) {
+    return res.status(400).json({ msg: "OTP not found" });
+  }
 
   if (Date.now() > record.expiresAt) {
     otpStore.delete(email);
@@ -160,7 +106,35 @@ router.post("/verify-email-otp", async (req, res) => {
   }
 
   otpStore.delete(email);
-  res.json({ msg: "OTP verified" });
+
+  // 🔥 FIND OR CREATE USER
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    user = new User({
+      name: email.split('@')[0],
+      email,
+      mobile: '',
+      password: 'otp_user',
+      role: 'user'
+    });
+    await user.save();
+  }
+
+  // 🔥 GENERATE TOKEN
+  const token = jwt.sign(
+    { id: user._id, role: user.role, name: user.name },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  // ✅ FINAL RESPONSE
+  res.json({
+    message: "OTP verified",
+    token,
+    role: user.role,
+    name: user.name
+  });
 });
 
 // ================= CURRENT USER =================
@@ -181,7 +155,7 @@ router.get("/me", async (req, res) => {
     }
 
     res.json({
-      id: user._id,
+      _id: user._id,
       name: user.name,
       email: user.email,
       mobile: user.mobile,
@@ -190,6 +164,111 @@ router.get("/me", async (req, res) => {
   } catch (err) {
     console.error("ME ROUTE ERROR:", err);
     res.status(401).json({ message: "Invalid token" });
+  }
+});
+
+
+
+// ================= UPDATE PROFILE =================
+router.put("/update", async (req, res) => {
+  try {
+
+    const authHeader = req.header("Authorization");
+    const token = authHeader?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ message: "No token" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const { name, email, mobile, password } = req.body;
+
+    const updateData = {
+      name,
+      email,
+      mobile
+    };
+
+    if (password && password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(password, salt);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      decoded.id,
+      updateData,
+      { new: true }
+    ).select("-password");
+
+    res.json(updatedUser);
+
+  } catch (err) {
+    console.error("UPDATE PROFILE ERROR:", err);
+    res.status(500).json({ message: "Profile update failed" });
+  }
+});
+
+/* =========================
+   UPGRADE TO RESEARCHER
+========================= */
+router.post("/upgrade-to-researcher", requireUserAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === "admin") {
+      return res.status(403).json({ message: "Admins cannot upgrade via this route" });
+    }
+
+    if (user.role === "researcher") {
+      const token = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+      );
+
+      return res.json({
+        message: "Already a researcher",
+        token,
+        role: user.role,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile
+        }
+      });
+    }
+
+    user.role = "researcher";
+    await user.save();
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    return res.json({
+      message: "Upgraded to researcher",
+      token,
+      role: user.role,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile
+      }
+    });
+
+  } catch (err) {
+    console.error("UPGRADE ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -219,6 +298,9 @@ router.get('/google/callback',
     res.redirect(`http://localhost:4200/google-success?token=${token}`);
   }
 );
+
+
+
 
 
 

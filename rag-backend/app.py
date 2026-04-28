@@ -1,7 +1,7 @@
 import os
-import uuid
 import jwt
 import requests
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
@@ -18,9 +18,9 @@ from mongo_utils import (
     list_conversations,
     get_or_create_conversation_for_document,
 )
-from mongo_client import pdf_collection
+from mongo_client import pdf_collection, conversation_collection
 
-# Load environment variables from a local .env file if present
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
@@ -45,8 +45,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
-
-
 # -----------------------------
 # Auth
 # -----------------------------
@@ -56,10 +54,12 @@ def require_auth(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization", "")
+
         if not auth_header.startswith("Bearer "):
             return jsonify({"error": "Authorization token missing"}), 401
 
         token = auth_header.split(" ", 1)[1]
+
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
         except Exception:
@@ -67,6 +67,7 @@ def require_auth(func):
 
         g.user_id = str(payload.get("id"))
         g.user_role = payload.get("role")
+
         return func(*args, **kwargs)
 
     return wrapper
@@ -80,14 +81,28 @@ def allowed_file(filename):
 
 
 def validate_user_access(user_id, document_id):
-    if not user_id or not document_id:
-        return False, "user_id and document_id required", None
+    if not document_id:
+        return False, "document_id required", None
 
     pdf_doc = get_pdf(document_id, user_id)
+
     if not pdf_doc:
         return False, "Document not found or access denied", None
 
     return True, None, pdf_doc
+
+
+def is_student() -> bool:
+    role = (getattr(g, "user_role", None) or "").lower()
+    return role == "user"
+
+
+# ✅ FIX: replaced deprecated utcnow()
+def get_today_bounds():
+    now = datetime.now(timezone.utc)
+    start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    end = start + timedelta(days=1)
+    return start, end
 
 
 # -----------------------------
@@ -96,29 +111,65 @@ def validate_user_access(user_id, document_id):
 @app.route("/rag", methods=["POST"])
 @require_auth
 def unified_rag():
-    data = request.get_json() or {}
+    data = request.get_json()
+    print("Incoming RAG request:", data)
+    data = request.get_json(force=True) or {}
 
     user_id = g.user_id
-    task = data.get("task", "qa").lower()
+    task = (data.get("task") or "qa").lower()
     query = data.get("query")
-    source = data.get("source", {})
-    document_id = source.get("id")
+    document_id = data.get("document_id")
     options = data.get("options", {})
+
     top_k = int(options.get("top_k", 5))
 
     if not query or not document_id:
-        return jsonify({"error": "query and source.id required"}), 400
+        return jsonify({"error": "query and document_id required"}), 400
+
+    # ---------------- DAILY LIMIT ----------------
+    if is_student():
+
+        start, end = get_today_bounds()
+
+        pipeline = [
+            {"$match": {"user_id": user_id}},
+            {"$unwind": "$messages"},
+            {
+                "$match": {
+                    "messages.role": "user",
+                    "messages.created_at": {"$gte": start, "$lt": end},
+                }
+            },
+            {"$count": "count"},
+        ]
+
+        agg = list(conversation_collection.aggregate(pipeline))
+        used_queries = agg[0]["count"] if agg else 0
+
+        if used_queries >= 5:
+            return (
+                jsonify(
+                    {
+                        "error": "Daily query limit reached for student plan. You can ask up to 5 questions per day. Upgrade to researcher plan for unlimited queries."
+                    }
+                ),
+                403,
+            )
 
     valid, err, _ = validate_user_access(user_id, document_id)
+
     if not valid:
         return jsonify({"error": err}), 404
 
     conversation_id = get_or_create_conversation_for_document(user_id, document_id)
-    print("📌 RAG called with task:", task, "query:", query)
 
     # ---------------- QA ----------------
     if task == "qa":
+
         result = answer_question(query, user_id, document_id, top_k=top_k)
+
+        # ✅ Safe answer extraction
+        answer = result.get("answer", "")
 
         append_message(
             conversation_id,
@@ -133,23 +184,26 @@ def unified_rag():
             conversation_id,
             user_id,
             role="assistant",
-            content=result["answer"],
+            content=answer,
             mode="qa",
             document_id=document_id,
             context=result.get("context_used"),
         )
 
-        convo = get_conversation(conversation_id, user_id)
-        return jsonify({
-            "task": task,
-            "conversation_id": conversation_id,
-            "document_id": document_id,
-            "messages": convo["messages"]
-        })
-
+        # ✅ FIX: return answer instead of messages
+        return jsonify(
+            {
+                "task": "qa",
+                "conversation_id": conversation_id,
+                "document_id": document_id,
+                "question": query,
+                "answer": answer,
+            }
+        )
 
     # ---------------- SUMMARY ----------------
     if task == "summarize":
+
         result = handle_summarize(
             query=query,
             user_id=user_id,
@@ -176,10 +230,39 @@ def unified_rag():
             document_id=document_id,
         )
 
-        return jsonify({"task": "summarize", **result})
+        if isinstance(result, str):
+            return jsonify(
+                {
+                    "task": "summarize",
+                    "document_id": document_id,
+                    "summary": result,
+                    "conversation_id": conversation_id,
+                }
+            )
+
+        elif isinstance(result, dict):
+            return jsonify(
+                {
+                    "task": "summarize",
+                    "document_id": document_id,
+                    "conversation_id": conversation_id,
+                    **result,
+                }
+            )
+
+        else:
+            return jsonify(
+                {
+                    "task": "summarize",
+                    "document_id": document_id,
+                    "summary": str(result),
+                    "conversation_id": conversation_id,
+                }
+            )
 
     # ---------------- FLASHCARDS ----------------
     if task == "flashcards":
+
         result = handle_flashcards(
             query=query,
             user_id=user_id,
@@ -206,10 +289,31 @@ def unified_rag():
             document_id=document_id,
         )
 
-        return jsonify({"task": "flashcards", **result})
+        if isinstance(result, dict):
+
+            return jsonify(
+                {
+                    "task": "flashcards",
+                    "document_id": document_id,
+                    "conversation_id": conversation_id,
+                    **result,
+                }
+            )
+
+        else:
+
+            return jsonify(
+                {
+                    "task": "flashcards",
+                    "document_id": document_id,
+                    "conversation_id": conversation_id,
+                    "flashcards": result,
+                }
+            )
 
     # ---------------- MCQ ----------------
     if task == "mcq":
+
         result = handle_mcq(
             query=query,
             user_id=user_id,
@@ -237,47 +341,52 @@ def unified_rag():
             document_id=document_id,
         )
 
-        return jsonify({"task": "mcq", **result})
-        
+        if isinstance(result, dict):
+
+            return jsonify(
+                {
+                    "task": "mcq",
+                    "document_id": document_id,
+                    "conversation_id": conversation_id,
+                    **result,
+                }
+            )
+
+        else:
+
+            return jsonify(
+                {
+                    "task": "mcq",
+                    "document_id": document_id,
+                    "conversation_id": conversation_id,
+                    "mcqs": result,
+                }
+            )
+
     return jsonify({"error": "Invalid task"}), 400
 
 
 # -----------------------------
-# Research assistant (Hugging Face)
+# Hugging Face Research Assistant
 # -----------------------------
 def call_hf_assistant(mode: str, user_input: str) -> str:
-    """
-    Calls a text-generation model on Hugging Face Inference API to assist with
-    rewriting, brainstorming, or summarizing research content.
-    """
+
     if not HF_API_KEY:
-        raise RuntimeError("HF_API_KEY is not configured on the backend")
+        raise RuntimeError("HF_API_KEY is not configured")
 
-    if mode == "rewrite":
-        system_instruction = (
-            "You are an AI Professor who helps researchers rewrite paragraphs in a clear, "
-            "concise, and academically appropriate style while preserving the original meaning. "
-            "Respond with only the rewritten text."
-        )
-    elif mode == "brainstorm":
-        system_instruction = (
-            "You are an AI Professor who brainstorms concrete, numbered research ideas, "
-            "angles, or follow‑up experiments. Respond with a numbered list of concise ideas."
-        )
-    elif mode == "summarize":
-        system_instruction = (
-            "You are an AI Professor who summarizes dense technical or research text. "
-            "Produce a concise, well‑structured summary focusing on key points."
-        )
-    else:
-        system_instruction = (
-            "You are an AI Professor helping with research and writing. "
-            "Respond clearly and concisely."
-        )
+    system_instruction = {
+        "rewrite": "You are an AI Professor who helps researchers rewrite paragraphs in a clear, concise, academically appropriate style. Respond only with rewritten text.",
+        "brainstorm": "You are an AI Professor who brainstorms numbered research ideas. Respond with a numbered list of concise ideas.",
+        "summarize": "You are an AI Professor who summarizes dense technical text. Produce a concise, well-structured summary.",
+    }.get(
+        mode,
+        "You are an AI Professor helping with research and writing. Respond clearly and concisely.",
+    )
 
-    # Use Hugging Face router chat-completions API (OpenAI-compatible)
     url = "https://router.huggingface.co/v1/chat/completions"
+
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+
     payload = {
         "model": HF_ASSISTANT_MODEL,
         "messages": [
@@ -291,9 +400,9 @@ def call_hf_assistant(mode: str, user_input: str) -> str:
 
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
     resp.raise_for_status()
+
     data = resp.json()
 
-    # Chat-completions style: choices[0].message.content
     if isinstance(data, dict):
         choices = data.get("choices") or []
         if choices:
@@ -302,23 +411,20 @@ def call_hf_assistant(mode: str, user_input: str) -> str:
             if content:
                 return str(content).strip()
 
-    # Fallback: return raw data string
     return str(data)
 
 
 @app.route("/research-assistant", methods=["POST"])
 @require_auth
 def research_assistant():
-    """
-    Lightweight LLM assistant for researchers, powered by Hugging Face.
 
-    Expects JSON body:
-    {
-      "mode": "rewrite" | "brainstorm" | "summarize",
-      "input": "text to work with"
-    }
-    """
+    if is_student():
+        return jsonify(
+            {"error": "Research assistant available only for researcher accounts."}
+        ), 403
+
     data = request.get_json() or {}
+
     mode = (data.get("mode") or "rewrite").lower()
     user_input = (data.get("input") or "").strip()
 
@@ -331,27 +437,15 @@ def research_assistant():
     try:
         result_text = call_hf_assistant(mode, user_input)
     except Exception as exc:
-        return (
-            jsonify(
-                {
-                    "error": "Failed to call Hugging Face assistant",
-                    "details": str(exc),
-                }
-            ),
-            500,
-        )
+        return jsonify(
+            {"error": "Failed to call Hugging Face assistant", "details": str(exc)}
+        ), 500
 
-    return jsonify(
-        {
-            "mode": mode,
-            "input": user_input,
-            "result": result_text,
-        }
-    )
+    return jsonify({"mode": mode, "input": user_input, "result": result_text})
 
 
 # -----------------------------
-# Conversations
+# Conversations & Documents
 # -----------------------------
 @app.route("/conversations", methods=["GET"])
 @require_auth
@@ -359,83 +453,237 @@ def conversations():
     document_id = request.args.get("document_id")
     return jsonify(list_conversations(g.user_id, document_id))
 
+
 @app.route("/documents", methods=["GET"])
 @require_auth
 def list_documents():
-    docs = pdf_collection.find(
-        {"user_id": g.user_id},
-        {
-            "_id": 0,
-            "document_id": 1,
-            "file_name": 1,
-            "uploaded_at": 1,
-        }
-    ).sort("uploaded_at", -1)
+
+    docs = (
+        pdf_collection.find(
+            {"user_id": g.user_id},
+            {"_id": 0, "document_id": 1, "file_name": 1, "uploaded_at": 1},
+        )
+        .sort("uploaded_at", -1)
+    )
 
     return jsonify(list(docs))
-
 
 
 @app.route("/conversations/<conversation_id>", methods=["GET"])
 @require_auth
 def conversation_detail(conversation_id):
+
     convo = get_conversation(conversation_id, g.user_id)
+
     if not convo:
         return jsonify({"error": "Conversation not found"}), 404
+
     return jsonify(convo)
 
 
 # -----------------------------
 # Upload PDF
 # -----------------------------
-
 @app.route("/upload-pdf", methods=["POST"])
 @require_auth
 def upload_pdf():
+
+    if is_student():
+
+        start, end = get_today_bounds()
+
+        today_uploads = pdf_collection.count_documents(
+            {"user_id": g.user_id, "uploaded_at": {"$gte": start, "$lt": end}}
+        )
+
+        if today_uploads >= 1:
+            return jsonify(
+                {
+                    "error": "Daily PDF upload limit reached for student plan. Upgrade to researcher plan for unlimited uploads."
+                }
+            ), 403
+
     if "file" not in request.files:
         return jsonify({"error": "PDF file missing"}), 400
 
     file = request.files["file"]
+
     if not allowed_file(file.filename):
         return jsonify({"error": "Invalid file type"}), 400
 
     filename = secure_filename(file.filename)
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(file_path)
 
-    print("📄 Saved PDF at:", file_path)
-    print("👤 User ID:", g.user_id)
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+    file.save(file_path)
 
     try:
         result = ingest_pdf(file_path, g.user_id)
-        print("✅ ingest_pdf result:", result)
     except Exception as e:
-        import traceback
-        print("❌ ingest_pdf crashed")
-        print(traceback.format_exc())
+        return jsonify({"error": "PDF ingestion failed", "details": str(e)}), 500
+
+    if not result or "document_id" not in result:
+        return jsonify(
+            {"error": "No document_id returned from backend", "raw_result": result}
+        ), 500
+
+    conversation_id = get_or_create_conversation_for_document(
+        g.user_id, result["document_id"]
+    )
+
+    return jsonify(
+        {
+            "message": "PDF ingested successfully",
+            "document_id": result["document_id"],
+            "conversation_id": conversation_id,
+        }
+    )
+
+
+# -----------------------------
+# Guest Endpoints
+# -----------------------------
+@app.route("/guest/upload-pdf", methods=["POST"])
+def guest_upload_pdf():
+
+    if "file" not in request.files:
+        return jsonify({"error": "PDF file missing"}), 400
+
+    file = request.files["file"]
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Invalid file type"}), 400
+
+    filename = secure_filename(file.filename)
+
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+    file.save(file_path)
+
+    result = ingest_pdf(file_path, user_id=None)
+
+    if not result or "document_id" not in result:
+        return jsonify({"error": "PDF ingestion failed"}), 500
+
+    return jsonify(
+        {"message": "PDF ingested successfully", "document_id": result["document_id"]}
+    )
+
+
+@app.route("/guest/rag", methods=["POST"])
+def guest_rag():
+
+    data = request.get_json(force=True) or {}
+
+    task = (data.get("task") or "qa").lower()
+    query = (data.get("query") or "").strip()
+    document_id = data.get("document_id")
+
+    if not query or not document_id:
+        return jsonify({"error": "query and document_id required"}), 400
+
+    try:
+
+        # ---------------- QA ----------------
+        if task == "qa":
+
+            result = answer_question(
+                query,
+                user_id=None,
+                document_id=document_id,
+                top_k=5,
+            )
+
+            answer = result.get("answer", "").strip()
+
+            if not answer:
+                answer = "⚠️ No answer generated. Try asking differently."
+
+            return jsonify({
+                "task": "qa",
+                "document_id": document_id,
+                "question": query,
+                "answer": answer,
+            })
+
+        # ---------------- SUMMARY ----------------
+        elif task == "summarize":
+
+            result = handle_summarize(
+                query=query,
+                user_id=None,
+                document_id=document_id,
+                summary_length="medium",
+                top_k=5,
+            )
+
+            print("DEBUG SUMMARY RESULT:", result)
+
+            # ✅ FIX: ensure valid summary
+            if not result or str(result).strip() == "":
+                result = "⚠️ Unable to generate summary. The document may not contain enough readable content."
+
+            if isinstance(result, str):
+                return jsonify({
+                    "task": "summarize",
+                    "document_id": document_id,
+                    "summary": result,
+                })
+            else:
+                return jsonify({
+                    "task": "summarize",
+                    "document_id": document_id,
+                    **result,
+                })
+
+        # ---------------- FLASHCARDS ----------------
+        elif task == "flashcards":
+
+            result = handle_flashcards(
+                query=query,
+                user_id=None,
+                document_id=document_id,
+                num_flashcards=5,
+                top_k=5,
+            )
+
+            return jsonify({
+                "task": "flashcards",
+                "document_id": document_id,
+                "flashcards": result or [],
+            })
+
+        # ---------------- MCQ ----------------
+        elif task == "mcq":
+
+            result = handle_mcq(
+                query=query,
+                user_id=None,
+                document_id=document_id,
+                num_mcqs=5,
+                difficulty="medium",
+                top_k=5,
+            )
+
+            return jsonify({
+                "task": "mcq",
+                "document_id": document_id,
+                "mcqs": result or [],
+            })
+
+        return jsonify({"error": "Invalid task"}), 400
+
+    except Exception as e:
+        print("ERROR in /guest/rag:", str(e))
         return jsonify({
-            "error": "PDF ingestion failed",
+            "error": "Internal server error",
             "details": str(e)
         }), 500
 
-    if not result or "document_id" not in result:
-        return jsonify({
-            "error": "No document_id returned from backend",
-            "raw_result": result
-        }), 500
-
-    conversation_id = get_or_create_conversation_for_document(
-        g.user_id,
-        result["document_id"]
-    )
-
-    return jsonify({
-        "message": "PDF ingested successfully",
-        "document_id": result["document_id"],
-        "conversation_id": conversation_id,
-    })
-
-
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5001,
+        debug=True,
+        use_reloader=False
+    )

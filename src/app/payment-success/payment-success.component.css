@@ -1,0 +1,38 @@
+.success-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top left, #1e293b, #020617);
+  color: #e5e7eb;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.success-card {
+  padding: 32px 40px;
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  max-width: 420px;
+}
+
+.success-card .icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.success-card h2 {
+  margin-bottom: 8px;
+}
+
+.success-card p {
+  font-size: 0.95rem;
+  color: #9ca3af;
+}
+
+.success-card.error {
+  border-color: #f97373;
+}
+

@@ -1,65 +1,152 @@
 <div class="auth-page">
-  <div class="auth-container">
-    
-    <!-- Robot with Eye Tracking -->
-    <div class="robot-container">
-      <svg width="200" height="200" viewBox="0 0 200 200" class="robot-svg">
-        <rect x="50" y="30" width="100" height="100" rx="15"
-          fill="#4a90e2" stroke="#2c5aa0" stroke-width="3"/>
+  <div class="split-container">
 
-        <circle cx="100" cy="20" r="8" fill="#ffd700"/>
-        <rect x="95" y="20" width="10" height="10" fill="#ffd700"/>
+    <!-- LEFT SIDE – Form + branding -->
+    <div class="left-panel">
+      <div class="auth-card">
+        <h2 class="card-title">Create Account</h2>
+        <p class="card-subtitle">Join RAGify Conversation</p>
 
-        <circle cx="75" cy="70" r="15" fill="#ffffff"/>
-        <circle [attr.cx]="75 + eyeLeftX" [attr.cy]="70 + eyeLeftY" r="8" fill="#2c3e50"/>
-        <circle [attr.cx]="75 + eyeLeftX + 2" [attr.cy]="70 + eyeLeftY - 2" r="3" fill="#ffffff"/>
+        <form #f="ngForm" (ngSubmit)="onSubmit(f)" novalidate class="login-form">
 
-        <circle cx="125" cy="70" r="15" fill="#ffffff"/>
-        <circle [attr.cx]="125 + eyeRightX" [attr.cy]="70 + eyeRightY" r="8" fill="#2c3e50"/>
-        <circle [attr.cx]="125 + eyeRightX + 2" [attr.cy]="70 + eyeRightY - 2" r="3" fill="#ffffff"/>
+          <div class="form-field">
+            <input 
+              type="text" 
+              placeholder="Full Name" 
+              name="name"
+              [(ngModel)]="user.name"
+              required
+              pattern="{{namePattern}}"
+              [ngClass]="{ 'invalid': f.controls['name']?.invalid && f.controls['name']?.touched }"
+              class="form-input"
+              autocomplete="name" />
 
-        <rect x="80" y="110" width="40" height="8" rx="4" fill="#2c3e50"/>
-      </svg>
-    </div>
+            <div class="field-error" *ngIf="f.controls['name']?.invalid && f.controls['name']?.touched">
+              Enter a valid name (min 3 letters)
+            </div>
+          </div>
 
-    <div class="form-wrapper">
-      <form #f="ngForm" (ngSubmit)="onSubmit(f)" novalidate>
-        <h2 class="auth-title">Create Account</h2>
-        <!-- <p class="auth-subtitle">The robot is watching your progress!</p> -->
+          <div class="form-field">
+            <input 
+              type="email" 
+              placeholder="Email address" 
+              name="email"
+              [(ngModel)]="user.email"
+              required
+              [ngClass]="{ 'invalid': f.controls['email']?.invalid && f.controls['email']?.touched }"
+              class="form-input"
+              autocomplete="email" />
 
-        <div class="input-group">
-          <input name="name" placeholder="Full Name" [(ngModel)]="user.name" required class="form-input" />
-          <span class="input-icon">👤</span>
-        </div>
+            <div class="field-error" *ngIf="f.controls['email']?.invalid && f.controls['email']?.touched">
+              Please enter a valid email
+            </div>
+          </div>
 
-        <div class="input-group">
-          <input type="email" name="email" placeholder="Email" [(ngModel)]="user.email" required class="form-input" />
-          <span class="input-icon">✉️</span>
-        </div>
+          <div class="form-field">
+            <input 
+              type="text" 
+              placeholder="Mobile Number" 
+              name="mobile"
+              [(ngModel)]="user.mobile"
+              required
+              pattern="{{phonePattern}}"
+              [ngClass]="{ 'invalid': f.controls['mobile']?.invalid && f.controls['mobile']?.touched }"
+              class="form-input"
+              autocomplete="tel" />
 
-        <div class="input-group">
-          <input name="mobile" placeholder="Mobile Number" [(ngModel)]="user.mobile" required class="form-input" />
-          <span class="input-icon">📞</span>
-        </div>
+            <div class="field-error" *ngIf="f.controls['mobile']?.invalid && f.controls['mobile']?.touched">
+              Please enter a valid 10-digit number
+            </div>
+          </div>
 
-        <div class="input-group">
-          <input [type]="showPassword ? 'text' : 'password'" name="password" placeholder="Password" [(ngModel)]="user.password" required class="form-input" />
-          <span class="eye-icon" (click)="togglePassword()">{{ showPassword ? '👁️' : '🙈' }}</span>
-        </div>
+          <div class="form-field password-wrapper">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              placeholder="Password" 
+              name="password"
+              [(ngModel)]="user.password"
+              required
+              pattern="{{passwordPattern}}"
+              [ngClass]="{ 'invalid': f.controls['password']?.invalid && f.controls['password']?.touched }"
+              class="form-input" />
 
-        <div class="input-group">
-          <input [type]="showConfirmPassword ? 'text' : 'password'" name="confirmPassword" placeholder="Confirm Password" [(ngModel)]="user.confirmPassword" required class="form-input" />
-          <span class="eye-icon" (click)="toggleConfirmPassword()">{{ showConfirmPassword ? '👁️' : '🙈' }}</span>
-        </div>
+            <button 
+              type="button" 
+              class="password-toggle"
+              (click)="togglePassword()">
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
 
-        <button type="submit" [disabled]="loading || f.invalid" class="submit-btn">
-          {{ loading ? 'Processing...' : 'Ready to Start' }}
-        </button>
-      </form>
+            <div class="field-error" *ngIf="f.controls['password']?.invalid && f.controls['password']?.touched">
+              Min 8 chars with uppercase, lowercase, number & symbol
+            </div>
+          </div>
 
-      <div class="switch">
-        Already have an account? <a routerLink="/login">Login</a>
+          <div class="form-field password-wrapper">
+            <input 
+              [type]="showConfirmPassword ? 'text' : 'password'" 
+              placeholder="Confirm Password" 
+              name="confirmPassword"
+              [(ngModel)]="user.confirmPassword"
+              required
+              [ngClass]="{ 'invalid': user.confirmPassword && user.password !== user.confirmPassword }"
+              class="form-input" />
+
+            <button 
+              type="button" 
+              class="password-toggle"
+              (click)="toggleConfirmPassword()">
+              {{ showConfirmPassword ? 'Hide' : 'Show' }}
+            </button>
+
+            <div class="field-error" *ngIf="user.confirmPassword && user.password !== user.confirmPassword">
+              Passwords do not match
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            class="submit-btn main"
+            [disabled]="loading || f.invalid || user.password !== user.confirmPassword">
+            {{ loading ? 'Creating...' : 'Create Account' }}
+          </button>
+
+        </form>
+
+        <p class="signup-link">
+          Already have an account? 
+          <a routerLink="/login">Sign In</a>
+        </p>
+
       </div>
     </div>
+
+    <!-- RIGHT SIDE – Dynamic chat visualization -->
+    <div class="right-panel">
+      <div class="visual-wrapper">
+        <video 
+          autoplay
+          muted
+          loop
+          playsinline
+          class="chat-video"
+          loading="eager"
+          preload="auto">
+
+          <source src="assets/img/ai-chat-animation1.mp4" type="video/mp4">
+
+          <img 
+            src="assets/images/ai-chat-fallback.gif" 
+            alt="AI conversation animation" 
+            class="chat-fallback" />
+        </video>
+
+        <div class="visual-overlay">
+          <div class="pulse-dot"></div>
+          <span>Always listening, always thinking...</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

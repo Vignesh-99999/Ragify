@@ -10,11 +10,10 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, HttpClientModule],
   templateUrl: './forgot-password.component.html',
-  styleUrls: ['./forgot-password.component.css']
+  styleUrls: ['./forgot-password.component.css']   // ← same file as login if you merge
 })
 export class ForgotPasswordComponent implements OnDestroy {
 
-  // ================= BASIC FIELDS =================
   email = '';
   otp = '';
   newPassword = '';
@@ -31,7 +30,6 @@ export class ForgotPasswordComponent implements OnDestroy {
 
   showPassword = false;
 
-  // ================= OTP BOX LOGIC =================
   otpBoxes: number[] = Array(6).fill(0);
   otpArray: string[] = ['', '', '', '', '', ''];
 
@@ -43,21 +41,14 @@ export class ForgotPasswordComponent implements OnDestroy {
     public router: Router
   ) {}
 
-  // ================= CLEANUP =================
   ngOnDestroy(): void {
     if (this.intervalId) clearInterval(this.intervalId);
-  }
-
-  // ================= NAV =================
-  backToLogin(): void {
-    this.router.navigate(['/login']);
   }
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
   }
 
-  // ================= SEND OTP =================
   sendOtp(): void {
     this.emailInvalid = !this.email || !this.email.includes('@');
     if (this.emailInvalid) return;
@@ -73,40 +64,54 @@ export class ForgotPasswordComponent implements OnDestroy {
         this.otpSent = true;
         this.resetStage = false;
         this.startTimer();
-        Swal.fire('OTP Sent ✅', 'Check your email', 'success');
+        Swal.fire('OTP Sent', 'Check your email', 'success');
       },
       error: (err: any) => {
         this.otpLoading = false;
-        Swal.fire(
-          'Error ❌',
-          err.error?.message || 'Unable to send OTP',
-          'error'
-        );
+        Swal.fire('Error', err.error?.message || 'Unable to send OTP', 'error');
       }
     });
   }
 
-  // ================= OTP INPUT =================
   onOtpInput(event: Event, index: number): void {
     const input = event.target as HTMLInputElement;
     const value = input.value;
 
-    if (!/^[0-9]$/.test(value)) {
+    if (value && !/^[0-9]$/.test(value)) {
       input.value = '';
       return;
     }
 
     this.otpArray[index] = value;
 
-    if (index < this.otpBoxes.length - 1) {
-      const nextInput = input.nextElementSibling as HTMLInputElement;
-      nextInput?.focus();
+    if (value && index < 5) {
+      const next = (input.nextElementSibling as HTMLInputElement);
+      next?.focus();
     }
 
     this.otp = this.otpArray.join('');
+    this.otpInvalid = false;
   }
 
-  // ================= VERIFY OTP =================
+  // Optional: better paste handling
+  onOtpPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const paste = event.clipboardData?.getData('text')?.trim() || '';
+    if (/^\d{6}$/.test(paste)) {
+      this.otpArray = paste.split('');
+      this.otp = paste;
+      this.otpInvalid = false;
+    }
+  }
+
+  // Optional: arrow key navigation
+  onOtpKeydown(event: KeyboardEvent, index: number): void {
+    if (event.key === 'Backspace' && !this.otpArray[index] && index > 0) {
+      const prev = (event.target as HTMLInputElement).previousElementSibling as HTMLInputElement;
+      prev?.focus();
+    }
+  }
+
   verifyOtp(): void {
     this.otpInvalid = this.otp.length !== 6;
     if (this.otpInvalid) return;
@@ -117,19 +122,14 @@ export class ForgotPasswordComponent implements OnDestroy {
     ).subscribe({
       next: () => {
         this.resetStage = true;
-        Swal.fire('OTP Verified ✅', 'Now reset your password', 'success');
+        Swal.fire('Verified', 'Now set your new password', 'success');
       },
       error: (err: any) => {
-        Swal.fire(
-          'Invalid OTP ❌',
-          err.error?.message || 'Wrong OTP',
-          'error'
-        );
+        Swal.fire('Invalid OTP', err.error?.message || 'Wrong code', 'error');
       }
     });
   }
 
-  // ================= RESET PASSWORD =================
   resetPassword(): void {
     this.passwordInvalid = this.newPassword.length < 6;
     this.confirmPasswordInvalid = this.newPassword !== this.confirmPassword;
@@ -141,36 +141,31 @@ export class ForgotPasswordComponent implements OnDestroy {
       { email: this.email, password: this.newPassword }
     ).subscribe({
       next: () => {
-        Swal.fire(
-          'Password Reset ✅',
-          'Login with your new password',
-          'success'
-        ).then(() => this.router.navigate(['/login']));
+        Swal.fire('Password Reset', 'You can now sign in', 'success')
+          .then(() => this.router.navigate(['/login']));
       },
       error: (err: any) => {
-        Swal.fire(
-          'Reset Failed ❌',
-          err.error?.message || 'Try again',
-          'error'
-        );
+        Swal.fire('Failed', err.error?.message || 'Try again', 'error');
       }
     });
   }
 
-  // ================= TIMER =================
   startTimer(): void {
     this.timer = 60;
     if (this.intervalId) clearInterval(this.intervalId);
 
     this.intervalId = setInterval(() => {
       this.timer--;
-      if (this.timer === 0) clearInterval(this.intervalId);
+      if (this.timer <= 0) {
+        clearInterval(this.intervalId);
+      }
     }, 1000);
   }
 
   resendOtp(): void {
     this.otpArray = ['', '', '', '', '', ''];
     this.otp = '';
+    this.otpInvalid = false;
     this.sendOtp();
   }
 }

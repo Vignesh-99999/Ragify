@@ -1,104 +1,120 @@
-import {
-  Component,
-  HostListener,
-  OnInit,
-  OnDestroy
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import Swal from 'sweetalert2';
 
 @Component({
-  selector: 'login',
+  selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit, OnDestroy {
+export class LoginComponent implements AfterViewInit, OnInit {
 
-  /* -------------------- STATE -------------------- */
   loginRole: 'user' | 'admin' = 'user';
   loginType: 'password' | 'google' = 'password';
+  videoSupported = true;
 
   phone = '';
   password = '';
   email = '';
   otp = '';
-
   otpSent = false;
   otpLoading = false;
-  otpSuccess = false;
-
   showPassword = false;
 
-  // Admin
   adminEmail = '';
   adminPassword = '';
 
-  /* -------------------- VALIDATION FLAGS -------------------- */
   phoneInvalid = false;
   passwordInvalid = false;
   emailInvalid = false;
-  otpInvalid = false;
   adminEmailInvalid = false;
   adminPasswordInvalid = false;
 
-  /* -------------------- ROBOT EYES -------------------- */
-  eyeLeftX = 0;
-  eyeLeftY = 0;
-  eyeRightX = 0;
-  eyeRightY = 0;
+  isBrowser: boolean;
 
-  private readonly MAX_EYE_MOVE = 6;
+  @ViewChild('chatVideo') chatVideo!: ElementRef<HTMLVideoElement>;
 
   constructor(
     private auth: AuthService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private route: ActivatedRoute,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+    this.checkVideoSupport();
+  }
 
-  ngOnInit(): void {}
-  ngOnDestroy(): void {}
+  /* ================= GOOGLE TOKEN CAPTURE ================= */
+  ngOnInit() {
+    if (!this.isBrowser) return;
 
-  /* -------------------- PASSWORD TOGGLE -------------------- */
-  togglePassword(): void {
+    this.route.queryParams.subscribe(params => {
+      const token = params['token'];
+
+      if (token && token !== 'undefined' && token !== 'null') {
+
+        console.log('✅ Google Token Received:', token);
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('isLoggedIn', 'true');
+
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+
+          localStorage.setItem('role', payload.role || 'user');
+          localStorage.setItem('userName', payload.name || 'User');
+
+        } catch (e) {
+          console.error('Token decode error', e);
+        }
+
+        Swal.fire('Google Login Successful', '', 'success')
+          .then(() => this.router.navigate(['/home']));
+      }
+    });
+  }
+
+  /* ================= VIDEO ================= */
+  ngAfterViewInit() {
+    if (!this.isBrowser) return;
+
+    const video = this.chatVideo?.nativeElement;
+    if (video) {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          video.poster = "assets/img/chat-poster.jpg";
+        });
+      }
+    }
+  }
+
+  private checkVideoSupport() {
+    if (!this.isBrowser) return;
+
+    const video = document.createElement('video');
+    this.videoSupported = !!(
+      video.canPlayType('video/mp4') ||
+      video.canPlayType('video/webm')
+    );
+  }
+
+  togglePassword() {
     this.showPassword = !this.showPassword;
   }
 
-  /* -------------------- EYE TRACKING -------------------- */
-  @HostListener('mousemove', ['$event'])
-  onMouseMove(event: MouseEvent): void {
-    const robot = document.querySelector('.robot-container') as HTMLElement;
-    if (!robot) return;
+  /* ================= USER PASSWORD LOGIN ================= */
+  loginWithPassword() {
+    if (!this.isBrowser) return;
 
-    const rect = robot.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    const dx = event.clientX - centerX;
-    const dy = event.clientY - centerY;
-
-    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-
-    const moveX = this.clamp((dx / distance) * this.MAX_EYE_MOVE, -this.MAX_EYE_MOVE, this.MAX_EYE_MOVE);
-    const moveY = this.clamp((dy / distance) * this.MAX_EYE_MOVE, -this.MAX_EYE_MOVE, this.MAX_EYE_MOVE);
-
-    this.eyeLeftX = moveX;
-    this.eyeLeftY = moveY;
-    this.eyeRightX = moveX;
-    this.eyeRightY = moveY;
-  }
-
-  private clamp(value: number, min: number, max: number): number {
-    return Math.max(min, Math.min(max, value));
-  }
-
-  /* -------------------- USER PASSWORD LOGIN -------------------- */
-  loginWithPassword(): void {
     this.phoneInvalid = !this.phone || this.phone.trim().length !== 10;
-    this.passwordInvalid = !this.password || this.password.trim().length < 6;
+    this.passwordInvalid = !this.password || this.password.trim().length < 8;
+
     if (this.phoneInvalid || this.passwordInvalid) return;
 
     this.auth.loginWithPassword({
@@ -106,91 +122,90 @@ export class LoginComponent implements OnInit, OnDestroy {
       password: this.password.trim()
     }).subscribe({
       next: (res: any) => {
-        localStorage.setItem('token', res.token);
-        localStorage.setItem('role', 'user');
-        if (res.user) {
-          localStorage.setItem('userName', res.user.name || 'User');
-          localStorage.setItem('userEmail', res.user.email || '');
-        }
 
-        Swal.fire('Login Successful 🎉', 'Welcome back!', 'success')
-          .then(() => this.router.navigate(['/home']));
-      },
-      error: (err) => {
-        if (err?.status === 403) {
-          Swal.fire('Account Banned 🚫', err.error?.message, 'error');
+        console.log('✅ Login Response:', res);
+
+        if (!res.token) {
+          Swal.fire('Error', 'Token not received from server', 'error');
           return;
         }
 
-        Swal.fire('Login Failed', err.error?.message || 'Invalid credentials', 'error');
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('role', res.role);
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userName', res.user?.name || this.phone);
+
+        Swal.fire('Welcome back!', '', 'success')
+          .then(() => this.router.navigate(['/home']));
+      },
+      error: (err) => {
+        Swal.fire('Login failed', err.error?.message || 'Invalid credentials', 'error');
       }
     });
   }
 
-  /* -------------------- EMAIL OTP LOGIN -------------------- */
-  sendEmailOtp(): void {
+  /* ================= EMAIL OTP LOGIN ================= */
+  sendEmailOtp() {
     this.emailInvalid = !this.email || !this.email.includes('@');
     if (this.emailInvalid) return;
 
     this.otpLoading = true;
-    this.otpSuccess = false;
 
     this.auth.sendEmailOtp({ email: this.email }).subscribe({
       next: () => {
         this.otpLoading = false;
         this.otpSent = true;
-        this.otpSuccess = true;
-
-        Swal.fire('OTP Sent ✅', 'Check your email', 'success');
+        Swal.fire('OTP sent', 'Check your email', 'success');
       },
-      error: (err) => {
+      error: () => {
         this.otpLoading = false;
-
-        if (err?.status === 403) {
-          Swal.fire('Account Banned 🚫', err.error?.message, 'error');
-          return;
-        }
-
-        Swal.fire('OTP Failed', 'Unable to send OTP', 'error');
+        Swal.fire('Error', 'Could not send OTP', 'error');
       }
     });
   }
 
-  verifyEmailOtp(): void {
-    this.otpInvalid = !this.otp;
-    if (this.otpInvalid) return;
+  verifyEmailOtp() {
+    if (!this.otp) return;
 
     this.auth.verifyEmailOtp({
       email: this.email,
       otp: this.otp
     }).subscribe({
       next: (res: any) => {
-        localStorage.setItem('token', res.token);
-        localStorage.setItem('role', res.role);
 
-        Swal.fire('Login Successful 🎉', 'You are now logged in', 'success')
-          .then(() => this.router.navigate(['/home']));
-      },
-      error: (err) => {
-        if (err?.status === 403) {
-          Swal.fire('Account Banned 🚫', err.error?.message, 'error');
+        if (!res.token) {
+          Swal.fire('Error', 'Token not received', 'error');
           return;
         }
 
-        Swal.fire('Invalid OTP', 'Please enter correct OTP', 'error');
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('role', res.role);
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userName', res.name || this.email);
+
+        Swal.fire('Success!', 'You are now logged in', 'success')
+          .then(() => this.router.navigate(['/home']));
+      },
+      error: () => {
+        Swal.fire('Invalid OTP', '', 'error');
       }
     });
   }
 
-  /* -------------------- GOOGLE LOGIN -------------------- */
-  loginWithGooglePopup(): void {
+  /* ================= GOOGLE LOGIN ================= */
+  loginWithGooglePopup() {
+    if (!this.isBrowser) return;
+
     window.location.href = 'http://localhost:5000/api/auth/google';
   }
 
-  /* -------------------- ADMIN LOGIN -------------------- */
-  loginAdmin(): void {
+  /* ================= ADMIN LOGIN ================= */
+  loginAdmin() {
+    if (!this.isBrowser) return;
+
     this.adminEmailInvalid = !this.adminEmail || !this.adminEmail.includes('@');
     this.adminPasswordInvalid = !this.adminPassword || this.adminPassword.trim().length < 6;
+
     if (this.adminEmailInvalid || this.adminPasswordInvalid) return;
 
     this.auth.loginAdmin({
@@ -198,14 +213,22 @@ export class LoginComponent implements OnInit, OnDestroy {
       password: this.adminPassword
     }).subscribe({
       next: (res: any) => {
+
+        if (!res.token) {
+          Swal.fire('Error', 'Token missing', 'error');
+          return;
+        }
+
         localStorage.setItem('token', res.token);
         localStorage.setItem('role', 'admin');
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userName', this.adminEmail);
 
-        Swal.fire('Admin Login Successful 🛡', '', 'success')
+        Swal.fire('Admin access granted', '', 'success')
           .then(() => this.router.navigate(['/admin/dashboard']));
       },
       error: () => {
-        Swal.fire('Admin Login Failed', 'Invalid admin credentials', 'error');
+        Swal.fire('Access denied', 'Invalid credentials', 'error');
       }
     });
   }

@@ -1,44 +1,90 @@
 <div class="app-container" [class.dark-mode]="isDarkMode">
+
+  <!-- ================= SIDEBAR ================= -->
   <aside class="sidebar" [class.collapsed]="!sidebarOpen">
     <div class="sidebar-wrapper">
+
+      <!-- Sidebar Header -->
       <div class="sidebar-header">
-        <div class="logo"><i class="pi pi-bolt"></i> RAGify</div>
+        <div class="logo">
+          <i class="pi pi-bolt"></i> RAGify
+        </div>
         <button class="new-btn" (click)="newChat()">+ New Session</button>
       </div>
+
+      <!-- Sidebar Content -->
       <div class="sidebar-content">
+
+        <!-- Search Box -->
         <div class="search-box">
-          <input type="text" placeholder="Search history..." [(ngModel)]="searchQuery" (input)="loadHistory()">
-        </div>&nbsp;&nbsp;
+          <input
+            type="text"
+            placeholder="Search history..."
+            [(ngModel)]="searchQuery"
+            name="searchQuery"
+            (input)="loadHistory()"
+          />
+        </div>
+
+        <!-- Chat History -->
         <div class="history-list">
-          <p class="label"><b>Your Chats</b></p>&nbsp;&nbsp;
-          <button *ngIf="documents.length > 0" class="clear-history-btn" (click)="clearHistory()">
-        Clear All
-      </button>&nbsp;&nbsp;
-          <div *ngIf="documents.length === 0" class="empty-state">No uploads yet</div>
-          <div *ngFor="let doc of filteredDocuments" 
-               class="history-item" 
-               [class.active]="currentDocumentId === doc.document_id"
-               (click)="selectDocument(doc)">
+          <p class="label"><b>Your Chats</b></p>
+
+          <button
+            *ngIf="documents.length > 0"
+            class="clear-history-btn"
+            (click)="clearHistory()">
+            Clear All
+          </button>
+
+          <div *ngIf="documents.length === 0" class="empty-state">
+            No uploads yet
+          </div>
+
+          <div
+            *ngFor="let doc of filteredDocuments"
+            class="history-item"
+            [class.active]="currentDocumentId === doc.document_id"
+            (click)="selectDocument(doc)"
+          >
             <i class="pi pi-file-pdf" style="color: #bf44ef;"></i>
             <span>{{ doc.file_name }}</span>
-            <i class="pi pi-trash delete-chat-btn" 
-           (click)="deleteDocument($event, doc.document_id)"></i>
-          
+            <i
+              class="pi pi-trash delete-chat-btn"
+              (click)="deleteDocument($event, doc.document_id); $event.stopPropagation()"
+            ></i>
           </div>
         </div>
       </div>
+
     </div>
   </aside>
 
+  <!-- ================= MAIN CONTENT ================= -->
   <main class="main-content">
+
+    <!-- Navbar -->
     <nav class="navbar">
       <div class="nav-left">
-        <button class="icon-btn" (click)="toggleSidebar()"><i class="pi pi-bars"></i></button>
+        <button class="icon-btn" (click)="toggleSidebar()">
+          <i class="pi pi-bars"></i>
+        </button>
+        <button class="back-home-btn" (click)="goHome()">
+          <i class="pi pi-arrow-left"></i>
+          Back
+        </button>
       </div>
+
       <div class="nav-right">
-        <button class="icon-btn" (click)="toggleTheme()"><i class="pi" [ngClass]="isDarkMode ? 'pi-sun' : 'pi-moon'"></i></button>
+        <button class="icon-btn" (click)="toggleTheme()">
+          <i class="pi" [ngClass]="isDarkMode ? 'pi-sun' : 'pi-moon'"></i>
+        </button>
+
         <div class="profile-chip">
-          <div class="avatar"><span>{{ (userName || 'U').charAt(0) | uppercase }}</span></div>
+          <div class="avatar">
+            <span>{{ (userName || 'G').charAt(0) | uppercase }}</span>
+          </div>
+
           <div class="user-meta">
             <span class="user-name">{{ isLoggedIn ? userName : 'Guest User' }}</span>
             <span class="user-email" *ngIf="isLoggedIn && userEmail">{{ userEmail }}</span>
@@ -47,33 +93,79 @@
       </div>
     </nav>
 
+    <!-- ================= CHAT VIEW ================= -->
     <div class="chat-viewport" #scrollMe>
       <div class="chat-inner">
+
+        <!-- Chat Messages -->
         <div *ngFor="let msg of filteredMessages" class="msg-row" [ngClass]="msg.role">
           <div class="msg-container">
+
             <div class="msg-avatar">
               <i [class]="msg.role === 'assistant' ? 'pi pi-bolt' : 'pi pi-user'"></i>
             </div>
+
             <div class="msg-body">
-              <div class="content">
-                <!-- User and QA text -->
-                <div *ngIf="msg.type === 'qa' || msg.type === 'text' || msg.role === 'user'">
+              <!-- BUG FIX #2: added .plain-content for user/text so pre-wrap only applies there,
+                   not to structured cards (qa/mcq/summary/flashcards) -->
+              <div class="content" [class.plain-content]="msg.role === 'user' || msg.type === 'text'">
+
+                <!-- USER MESSAGE — BUG FIX #2: separated from text type to avoid double render -->
+                <div *ngIf="msg.role === 'user'">
                   <div [innerHTML]="msg.content"></div>
                 </div>
 
-                <!-- Summaries -->
-                <div *ngIf="msg.type === 'summary'" class="summary-container">
-                  <p class="summary-title"><strong>Summary</strong></p>
-                  <p *ngIf="msg.content.overview">{{ msg.content.overview }}</p>
-                  <div *ngIf="msg.content.key_points?.length">
-                    <p class="summary-subtitle">Key Points:</p>
-                    <ul>
-                      <li *ngFor="let point of msg.content.key_points">{{ point }}</li>
-                    </ul>
-                  </div>
+                <!-- TEXT TYPE (assistant only) -->
+                <div *ngIf="msg.role === 'assistant' && msg.type === 'text'">
+                  <div [innerHTML]="msg.content"></div>
                 </div>
 
-                <!-- Flashcards -->
+                <!-- QA TYPE -->
+                <div *ngIf="msg.type === 'qa'" class="qa-card">
+
+                  <div class="qa-question">
+                    <div class="qa-label">Question</div>
+                    <div class="qa-text">{{ msg.content.question }}</div>
+                  </div>
+
+                  <div class="qa-answer">
+                    <div class="qa-label answer-label">Answer</div>
+                    <div class="qa-answer-content">{{ msg.content.answer }}</div>
+                  </div>
+
+                  <div *ngIf="msg.content.confidence_score" class="qa-confidence">
+                    <i class="pi pi-chart-line"></i>
+                    Confidence: {{ msg.content.confidence_score }}%
+                  </div>
+
+                </div>
+
+                <!-- SUMMARY TYPE -->
+                <!-- BUG FIX #1: replaced invalid typeof template expression with isString() helper -->
+                <div *ngIf="msg.type === 'summary'" class="summary-container">
+                  <p class="summary-title"><strong>Summary</strong></p>
+
+                  <p *ngIf="isString(msg.content)">{{ msg.content }}</p>
+
+                  <ng-container *ngIf="!isString(msg.content)">
+                    <p *ngIf="msg.content?.summary">{{ msg.content.summary }}</p>
+                    <p *ngIf="msg.content?.overview">{{ msg.content.overview }}</p>
+
+                    <div *ngIf="msg.content?.key_points?.length">
+                      <p class="summary-subtitle">Key Points:</p>
+                      <ul>
+                        <li *ngFor="let point of msg.content.key_points">{{ point }}</li>
+                      </ul>
+                    </div>
+
+                    <div *ngIf="msg.content?.confidence_score" class="confidence-box">
+                      Confidence Score: {{ msg.content.confidence_score }}%
+                    </div>
+                  </ng-container>
+                </div>
+
+                <!-- FLASHCARD TYPE -->
+                <!-- BUG FIX #4: renamed .label to .fc-label to avoid CSS collision with sidebar .label -->
                 <div *ngIf="msg.type === 'flashcards'" class="flashcard-scroll">
                   <div
                     *ngFor="let card of msg.content.flashcards"
@@ -83,18 +175,18 @@
                   >
                     <div class="flashcard-inner">
                       <div class="flashcard-face front">
-                        <span class="label">Question</span>
+                        <span class="fc-label">Q:</span>
                         <p>{{ card.front }}</p>
                       </div>
                       <div class="flashcard-face back">
-                        <span class="label">Answer</span>
+                        <span class="fc-label">A:</span>
                         <p>{{ card.back }}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- MCQs -->
+                <!-- MCQ TYPE -->
                 <div *ngIf="msg.type === 'mcq'" class="mcq-wrapper">
                   <div *ngFor="let item of msg.content.mcqs; let i = index" class="mcq-card">
                     <p class="question"><strong>{{ i + 1 }}.</strong> {{ item.question }}</p>
@@ -108,23 +200,19 @@
                         }"
                         [disabled]="item.showAnswer"
                         (click)="selectMcqOption(msg, i, $any(opt.key))"
-
                       >
                         <span class="opt-key">{{ opt.key }}</span>
                         <span class="opt-text">{{ opt.value }}</span>
                       </button>
                     </div>
+
                     <div *ngIf="item.showAnswer" class="mcq-feedback">
-                      <div
-                        class="feedback-header"
-                        [ngClass]="{ success: item.selected === item.correct }"
-                      >
-                        <span>
-                          {{ item.selected === item.correct ? 'Your answer is correct.' : 'Your answer is not correct.' }}
-                        </span>
+                      <!-- BUG FIX #4: renamed .label to .fb-label to avoid CSS collision -->
+                      <div class="feedback-header" [ngClass]="{ success: item.selected === item.correct }">
+                        {{ item.selected === item.correct ? 'Your answer is correct.' : 'Your answer is not correct.' }}
                       </div>
                       <p class="feedback-body">
-                        <span class="label">Correct answer:</span> {{ item.correct }}
+                        <span class="fb-label">Correct answer:</span> {{ item.correct }}
                       </p>
                       <p class="feedback-explanation">{{ item.explanation }}</p>
                     </div>
@@ -137,38 +225,74 @@
           </div>
         </div>
 
+        <!-- Loading Spinner -->
         <div *ngIf="isLoading" class="msg-row assistant">
           <div class="msg-container">
             <div class="msg-avatar"><i class="pi pi-bolt"></i></div>
-            <div class="content" style="background: transparent; box-shadow: none; border: none;">
+            <div class="content plain-content" style="background: transparent; box-shadow: none; border: none;">
               <i class="pi pi-spin pi-spinner" style="color: #10a37f; font-size: 1.2rem;"></i>
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
+    <!-- ================= INPUT AREA ================= -->
     <div class="input-container">
       <div class="input-bar">
-        <input type="file" (change)="onFileSelected($event)" accept=".pdf" id="bar-upload" hidden>
+
+        <!-- File Upload -->
+        <input type="file" id="bar-upload" hidden accept=".pdf" (change)="onFileSelected($event)">
         <label for="bar-upload" class="upload-trigger"><i class="pi pi-paperclip"></i></label>
-        
-        <select [(ngModel)]="selectedMode" class="mode-select">
-          <option value="qa">Q&As</option>
-          <option value="flashcards">Flashcards</option>
-          <option value="summary">Summarize</option>
-          <option value="mcq">MCQs</option>
-        </select>
 
-        <textarea [(ngModel)]="userInput" 
-                  (keydown.enter)="$event.preventDefault(); sendMessage()" 
-                  placeholder="Ask about the file..." 
-                  rows="1"></textarea>
+        <!-- Custom Mode Dropdown -->
+        <div class="mode-dropdown" [class.open]="modeDropdownOpen">
+          <div class="mode-trigger" (click)="modeDropdownOpen = !modeDropdownOpen">
+            <div class="mode-icon" [style.background]="getModeConfig(selectedMode).bg">
+              <span class="mode-emoji">{{ getModeConfig(selectedMode).icon }}</span>
+            </div>
+            <span class="mode-label">{{ getModeConfig(selectedMode).label }}</span>
+            <span class="mode-caret">▼</span>
+          </div>
+          <div class="mode-menu" [class.visible]="modeDropdownOpen">
+            <div class="mode-menu-inner">
+              <ng-container *ngFor="let mode of modeOptions; let i = index">
+                <div class="mode-divider" *ngIf="i === 2"></div>
+                <div
+                  class="mode-item"
+                  [class.selected]="selectedMode === mode.value"
+                  (click)="selectMode(mode.value)"
+                >
+                  <div class="mode-item-icon" [style.background]="mode.bg">
+                    <span class="mode-emoji">{{ mode.icon }}</span>
+                  </div>
+                  <div class="mode-item-body">
+                    <div class="mode-item-name">{{ mode.label }}</div>
+                    <div class="mode-item-desc">{{ mode.desc }}</div>
+                  </div>
+                  <span class="mode-check" *ngIf="selectedMode === mode.value">✓</span>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
 
+        <!-- Textarea -->
+        <textarea
+          [(ngModel)]="userInput"
+          rows="1"
+          placeholder="Ask about the file..."
+          (keydown.enter)="$event.preventDefault(); sendMessage()"
+        ></textarea>
+
+        <!-- Send Button -->
         <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput.trim()">
           <i class="pi pi-arrow-up"></i>
         </button>
+
       </div>
     </div>
+
   </main>
 </div>

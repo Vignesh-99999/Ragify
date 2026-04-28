@@ -1,27 +1,41 @@
 <!-- DASHBOARD WRAPPER -->
 <div class="dashboard-wrapper">
 
-  <!-- DASHBOARD NAVBAR -->
+  <!-- NAVBAR -->
   <div class="page-navbar">
     <h2>Admin Dashboard</h2>
-
     <div class="nav-actions">
       <span class="admin-badge">Admin</span>
     </div>
   </div>
 
-  <!-- MAIN CONTENT -->
+  <!-- CONTENT -->
   <div class="dashboard-content">
 
     <p class="welcome">Welcome back, Admin 👋</p>
 
+    <!-- CARDS -->
     <div class="cards">
       <div class="card">
         <h3>Total Users</h3>
         <h1>{{ totalUsers }}</h1>
       </div>
+
+      <div class="card">
+        <h3>Total Researchers</h3>
+        <h1>{{ totalResearchers }}</h1>
+      </div>
     </div>
 
-  </div>
+    <!-- 📊 NEW ANALYTICS CHART -->
+    <!-- <div class="chart-container">
+      <h3>📊 Platform Usage Analytics</h3> -->
 
+      <!-- <div style="height: 400px;">
+        <canvas id="analyticsChart"></canvas>
+      </div> -->
+
+    <!-- </div> -->
+
+  </div>
 </div>

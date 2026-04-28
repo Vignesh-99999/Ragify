@@ -1,19 +1,24 @@
-import os
-from dotenv import load_dotenv
-import google.genai as genai
+import requests
 
-# Load env once
-load_dotenv()
+def ask_ollama(prompt: str, model: str = "mistral") -> str:
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.3
+            }
+        }
+    )
+    return response.json().get("response", "").strip()
 
-# Initialize Gemini client once
-client = genai.Client(
-    api_key=os.getenv("GOOGLE_API_KEY")
-)
 
 def query_rewrite(question: str, max_queries: int = 8) -> list[str]:
     """
     Rewrite a user question into diverse, high-quality
-    search queries for RAG retrieval.
+    search queries for RAG retrieval using Ollama.
     """
 
     prompt = f"""
@@ -29,10 +34,8 @@ Guidelines:
 - Include both:
   • keyword-style queries
   • natural-language questions
-- If the question is biographical or narrative:
-  • include implicit fact queries
-  • include third-person and first-person variants
-- Prefer entity-centered queries over vague phrases
+- Include variations and perspectives
+- Prefer specific, entity-focused queries
 - One query per line
 - Do not number the queries
 - Do not include any extra text
@@ -41,16 +44,16 @@ Question:
 {question}
 """
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt
-    )
+    try:
+        response_text = ask_ollama(prompt)
+    except Exception:
+        return [question]
 
-    # Clean, deduplicate, and enforce max count
+    # Clean + deduplicate
     queries = []
     seen = set()
 
-    for line in response.text.split("\n"):
+    for line in response_text.split("\n"):
         q = line.strip()
         if q and q.lower() not in seen:
             queries.append(q)
@@ -58,7 +61,7 @@ Question:
         if len(queries) >= max_queries:
             break
 
-    # Fallback safety (never return empty list)
+    # Fallback safety
     if not queries:
         queries = [question]
 

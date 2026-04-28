@@ -1,0 +1,79 @@
+<div class="page">
+
+  <div class="bg-blobs"></div>
+
+  <button class="back-btn" (click)="goBack()">← Back</button>
+
+  <div class="header">
+    <h1>Choose Your Perfect Plan</h1>
+    <p>Unlock premium features and level up your experience</p>
+  </div>
+
+  <div class="container">
+
+    <div class="plans">
+      <div class="card"
+           *ngFor="let plan of plans"
+           [class.active]="selectedPlan?.name === plan.name"
+           (click)="selectPlan(plan)">
+
+        <div class="top">
+          <span class="icon">
+            <span *ngIf="plan.name === 'Monthly'">📅</span>
+            <span *ngIf="plan.name === 'Quarterly'">📦</span>
+            <span *ngIf="plan.name === 'Yearly'">🚀</span>
+          </span>
+
+          <span class="title">{{ plan.name }}</span>
+
+          <span *ngIf="plan.name === 'Yearly'" class="badge">
+            BEST VALUE
+          </span>
+        </div>
+
+        <div class="duration">{{ plan.duration }}</div>
+        <div class="price">₹{{ plan.price }}</div>
+
+        <div class="desc">
+          <span *ngIf="plan.name === 'Monthly'">Starter friendly</span>
+          <span *ngIf="plan.name === 'Quarterly'">Balanced choice</span>
+          <span *ngIf="plan.name === 'Yearly'">Save maximum</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="checkout" *ngIf="selectedPlan">
+
+      <h2>Order Summary</h2>
+
+      <div class="row">
+        <span>Plan</span>
+        <b>{{ selectedPlan.name }}</b>
+      </div>
+
+      <div class="row">
+        <span>Duration</span>
+        <b>{{ selectedPlan.duration }}</b>
+      </div>
+
+      <div class="row total">
+        <span>Total</span>
+        <b>₹{{ selectedPlan.price }}</b>
+      </div>
+
+      <input class="input"
+             type="email"
+             placeholder="Enter your email"
+             [(ngModel)]="userEmail" />
+
+      <button class="btn" (click)="proceedToPay()">
+        Pay ₹{{ selectedPlan.price }}
+      </button>
+
+      <p class="secure">🔒 Secure payment powered by Stripe</p>
+
+    </div>
+
+  </div>
+</div>

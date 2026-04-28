@@ -1,148 +1,247 @@
+```html
 <div class="auth-page">
-  <div class="auth-container">
+  <div class="split-container">
 
-    <!-- ================= ROBOT ANIMATION ================= -->
-    <div class="robot-container">
-      <svg width="200" height="200" viewBox="0 0 200 200" class="robot-svg">
-        <rect x="50" y="30" width="100" height="100" rx="15"
-          fill="#4a90e2" stroke="#2c5aa0" stroke-width="3"/>
+    <!-- LEFT SIDE – Form + branding -->
+    <div class="left-panel">
 
-        <circle cx="100" cy="20" r="8" fill="#ffd700"/>
-        <rect x="95" y="20" width="10" height="10" fill="#ffd700"/>
+      <div class="auth-card">
+        <h2 class="card-title">Sign In</h2>
+        <p class="card-subtitle">Continue your conversation</p>
 
-        <circle cx="75" cy="70" r="15" fill="#ffffff"/>
-        <circle [attr.cx]="75 + eyeLeftX" [attr.cy]="70 + eyeLeftY" r="8" fill="#2c3e50"/>
-        <circle [attr.cx]="75 + eyeLeftX + 2" [attr.cy]="70 + eyeLeftY - 2" r="3" fill="#ffffff"/>
-
-        <circle cx="125" cy="70" r="15" fill="#ffffff"/>
-        <circle [attr.cx]="125 + eyeRightX" [attr.cy]="70 + eyeRightY" r="8" fill="#2c3e50"/>
-        <circle [attr.cx]="125 + eyeRightX + 2" [attr.cy]="70 + eyeRightY - 2" r="3" fill="#ffffff"/>
-
-        <rect x="80" y="110" width="40" height="8" rx="4" fill="#2c3e50"/>
-      </svg>
-    </div>
-
-    <!-- ================= FORM ================= -->
-    <div class="form-wrapper">
-      <h2 class="auth-title">Welcome Back!</h2>
-      <p class="auth-subtitle">Sign in to continue</p>
-
-      <!-- ROLE SELECTOR -->
-      <div class="login-type-selector">
-        <button class="type-btn" [class.active]="loginRole === 'user'" (click)="loginRole='user'">👤 User</button>
-        <button class="type-btn" [class.active]="loginRole === 'admin'" (click)="loginRole='admin'">🛡 Admin</button>
-      </div>
-
-      <!-- ================= USER LOGIN ================= -->
-      <div *ngIf="loginRole === 'user'">
-
-        <!-- LOGIN METHOD SWITCH -->
-        <div class="login-type-selector">
-          <button class="type-btn" [class.active]="loginType === 'password'" (click)="loginType='password'">🔐 Password</button>
-          <button class="type-btn" [class.active]="loginType === 'google'" (click)="loginType='google'">🌐 Gmail</button>
-        </div>
-
-        <!-- PASSWORD LOGIN -->
-        <div *ngIf="loginType === 'password'" class="login-form">
-          <!-- Phone -->
-          <div class="input-group">
-            <input type="text" placeholder="Phone Number"
-              [(ngModel)]="phone"
-              [ngClass]="{'invalid': phoneInvalid}"
-              class="form-input">
-            <span class="input-error-message" *ngIf="phoneInvalid">
-              Please enter a valid phone number
-            </span>
-          </div>
-
-          <!-- Password -->
-          <div class="input-group" style="position:relative;">
-            <input [type]="showPassword ? 'text' : 'password'"
-              placeholder="Password"
-              [(ngModel)]="password"
-              [ngClass]="{'invalid': passwordInvalid}"
-              class="form-input"
-              style="padding-right: 40px;">
-            <span (click)="togglePassword()"
-              style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer;">
-              {{ showPassword ? '👁️' : '🙈' }}
-            </span>
-            <span class="input-error-message" *ngIf="passwordInvalid">
-              Please enter a valid password
-            </span>
-          </div>
-
-          <button class="submit-btn" (click)="loginWithPassword()">Login</button>
-        </div>
-        <!-- FORGOT PASSWORD LINK -->
-          <div class="forgot-password">
-            <a routerLink="/forgot-password">Forgot Password?</a>
-          </div>
-
-
-
-        <!-- GOOGLE LOGIN -->
-        <div *ngIf="loginType === 'google'" class="login-form">
-          <button class="google-btn" (click)="loginWithGooglePopup()">
-            <img src="assets/img/google-icon.png" alt="Google Login"/>
-            Login with Google
+        <!-- Role selector -->
+        <div class="role-toggle">
+          <button 
+            class="role-btn" 
+            [class.active]="loginRole === 'user'" 
+            (click)="loginRole = 'user'">
+            User
           </button>
-
-          <input type="email" placeholder="Gmail Address"
-            [(ngModel)]="email"
-            [ngClass]="{'invalid': emailInvalid}"
-            class="form-input"
-            [disabled]="otpSent || otpLoading">
-          <span class="input-error-message" *ngIf="emailInvalid">
-            Please enter a valid email
-          </span>
-
-          <div *ngIf="otpLoading" class="loader-text">⏳ Sending OTP...</div>
-          <div *ngIf="otpSuccess" class="success-text">✅ OTP sent successfully</div>
-
-          <input *ngIf="otpSent" type="text" placeholder="Enter OTP"
-            [(ngModel)]="otp" class="form-input">
-          <button *ngIf="!otpSent" class="submit-btn secondary" [disabled]="otpLoading" (click)="sendEmailOtp()">Send OTP</button>
-          <button *ngIf="otpSent" class="submit-btn" (click)="verifyEmailOtp()">Verify OTP</button>
+          <button 
+            class="role-btn" 
+            [class.active]="loginRole === 'admin'" 
+            (click)="loginRole = 'admin'">
+            Admin
+          </button>
         </div>
 
+        <!-- USER LOGIN -->
+        <ng-container *ngIf="loginRole === 'user'">
+
+          <div class="method-toggle">
+            <button 
+              class="method-btn" 
+              [class.active]="loginType === 'password'" 
+              (click)="loginType = 'password'">
+              Password
+            </button>
+            <button 
+              class="method-btn" 
+              [class.active]="loginType === 'google'" 
+              (click)="loginType = 'google'">
+              Google
+            </button>
+          </div>
+
+          <!-- Password login -->
+          <form *ngIf="loginType === 'password'" class="login-form">
+
+            <div class="form-field">
+              <input 
+                type="tel" 
+                name="phone"
+                placeholder="Phone number" 
+                [(ngModel)]="phone"
+                [ngClass]="{ 'invalid': phoneInvalid }"
+                class="form-input"
+                autocomplete="tel" />
+              <div class="field-error" *ngIf="phoneInvalid">
+                Please enter a valid 10-digit number
+              </div>
+            </div>
+
+            <div class="form-field password-wrapper">
+              <input 
+                [type]="showPassword ? 'text' : 'password'" 
+                name="password"
+                placeholder="Password" 
+                [(ngModel)]="password"
+                [ngClass]="{ 'invalid': passwordInvalid }"
+                class="form-input" />
+              <button 
+                type="button" 
+                class="password-toggle"
+                (click)="togglePassword()">
+                {{ showPassword ? 'Hide' : 'Show' }}
+              </button>
+              <div class="field-error" *ngIf="passwordInvalid">
+                Password must be at least 6 characters
+              </div>
+            </div>
+
+            <a routerLink="/forgot-password" class="forgot-link">
+              Forgot password?
+            </a>
+
+            <button 
+              type="button" 
+              class="submit-btn main"
+              (click)="loginWithPassword()">
+              Sign In
+            </button>
+          </form>
+
+          <!-- Google / Email OTP login -->
+          <div *ngIf="loginType === 'google'" class="login-form">
+
+            <button 
+              class="submit-btn google"
+              (click)="loginWithGooglePopup()">
+              <img src="assets/img/google-icon.png" alt="Google" class="google-icon" />
+              Continue with Google
+            </button>
+
+            <div class="or-divider">
+              <span>or</span>
+            </div>
+
+            <div class="form-field">
+              <input 
+                type="email" 
+                name="email"
+                placeholder="Email address" 
+                [(ngModel)]="email"
+                [ngClass]="{ 'invalid': emailInvalid }"
+                [disabled]="otpSent || otpLoading"
+                class="form-input" />
+              <div class="field-error" *ngIf="emailInvalid">
+                Please enter a valid email
+              </div>
+            </div>
+
+            <ng-container *ngIf="otpSent; else sendOtp">
+
+              <div class="form-field">
+                <input 
+                  type="text" 
+                  name="otp"
+                  placeholder="Enter OTP" 
+                  [(ngModel)]="otp"
+                  class="form-input" />
+              </div>
+
+              <button 
+                class="submit-btn main"
+                (click)="verifyEmailOtp()">
+                Verify OTP
+              </button>
+
+            </ng-container>
+
+            <ng-template #sendOtp>
+
+              <button 
+                class="submit-btn secondary"
+                [disabled]="otpLoading"
+                (click)="sendEmailOtp()">
+                {{ otpLoading ? 'Sending…' : 'Send OTP' }}
+              </button>
+
+            </ng-template>
+
+          </div>
+
+          <p class="signup-link">
+            Don't have an account? 
+            <a routerLink="/signup">Sign up</a>
+          </p>
+
+        </ng-container>
+
+        <!-- ADMIN LOGIN -->
+        <ng-container *ngIf="loginRole === 'admin'">
+
+          <form class="login-form">
+
+            <div class="form-field">
+              <input 
+                type="email" 
+                name="adminEmail"
+                placeholder="Admin email" 
+                [(ngModel)]="adminEmail"
+                [ngClass]="{ 'invalid': adminEmailInvalid }"
+                class="form-input" />
+              <div class="field-error" *ngIf="adminEmailInvalid">
+                Please enter a valid email
+              </div>
+            </div>
+
+            <div class="form-field password-wrapper">
+              <input 
+                [type]="showPassword ? 'text' : 'password'" 
+                name="adminPassword"
+                placeholder="Admin password" 
+                [(ngModel)]="adminPassword"
+                [ngClass]="{ 'invalid': adminPasswordInvalid }"
+                class="form-input" />
+
+              <button 
+                type="button" 
+                class="password-toggle"
+                (click)="togglePassword()">
+                {{ showPassword ? 'Hide' : 'Show' }}
+              </button>
+
+              <div class="field-error" *ngIf="adminPasswordInvalid">
+                Password must be at least 6 characters
+              </div>
+            </div>
+
+            <button 
+              type="button" 
+              class="submit-btn main"
+              (click)="loginAdmin()">
+              Admin Sign In
+            </button>
+
+          </form>
+
+        </ng-container>
+
       </div>
-
-      <!-- ================= ADMIN LOGIN ================= -->
-      <div *ngIf="loginRole === 'admin'" class="login-form">
-        <div class="input-group">
-          <input type="email" placeholder="Admin Gmail"
-            [(ngModel)]="adminEmail"
-            [ngClass]="{'invalid': adminEmailInvalid}"
-            class="form-input">
-          <span class="input-error-message" *ngIf="adminEmailInvalid">
-            Please enter a valid email
-          </span>
-        </div>
-
-        <div class="input-group" style="position: relative;">
-          <input [type]="showPassword ? 'text' : 'password'"
-            placeholder="Admin Password"
-            [(ngModel)]="adminPassword"
-            [ngClass]="{'invalid': adminPasswordInvalid}"
-            class="form-input"
-            style="padding-right: 40px;">
-          <span (click)="togglePassword()"
-            style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px;">
-            {{ showPassword ? '👁️' : '🙈' }}
-          </span>
-          <span class="input-error-message" *ngIf="adminPasswordInvalid">
-            Please enter a valid password
-          </span>
-        </div>
-
-        <button class="submit-btn" (click)="loginAdmin()">Admin Login</button>
-      </div>
-
-      <div class="switch" *ngIf="loginRole === 'user'">
-        Don't have an account? <a routerLink="/signup">Sign Up</a>
-      </div>
-
     </div>
+
+    <!-- RIGHT SIDE – Dynamic chat visualization -->
+    <div class="right-panel">
+      <div class="visual-wrapper">
+
+        <video 
+          #chatVideo
+          autoplay
+          muted
+          loop
+          playsinline
+          class="chat-video"
+          loading="eager"
+          preload="auto">
+
+          <source src="assets/img/ai-chat-animation1.mp4" type="video/mp4">
+
+          <img 
+            src="assets/images/ai-chat-fallback.gif" 
+            alt="AI conversation animation fallback" 
+            class="chat-fallback" />
+
+        </video>
+
+        <div class="visual-overlay">
+          <div class="pulse-dot"></div>
+          <span>Always listening, always thinking...</span>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>
+```

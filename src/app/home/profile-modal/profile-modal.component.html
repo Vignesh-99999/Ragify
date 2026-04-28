@@ -1,0 +1,23 @@
+<!-- profile-modal.component.html -->
+<div class="profile-modal-backdrop">
+  <div class="profile-modal">
+    <h2>Edit Profile</h2>
+
+    <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+
+      <label for="name">Name</label>
+      <input id="name" type="text" formControlName="name" />
+
+      <label for="email">Email</label>
+      <input id="email" type="email" formControlName="email" />
+
+      <label for="mobile">Mobile</label>
+      <input id="mobile" type="text" formControlName="mobile" />
+
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" (click)="close()">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>

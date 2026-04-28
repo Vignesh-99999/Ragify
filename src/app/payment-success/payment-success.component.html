@@ -1,0 +1,12 @@
+<div class="success-wrapper">
+  <div class="success-card" [ngClass]="status">
+    <div class="icon">
+      <span *ngIf="status === 'loading'">⏳</span>
+      <span *ngIf="status === 'success'">✅</span>
+      <span *ngIf="status === 'error'">⚠️</span>
+    </div>
+    <h2>Payment Successful</h2>
+    <p>{{ message }}</p>
+  </div>
+</div>
+
